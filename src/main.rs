@@ -12,6 +12,7 @@ use bevy::color::palettes::css::*;
 use bevy::input::keyboard::keyboard_input_system;
 use crate::grid::*;
 use crate::sprite::*;
+use std::vec::Vec;
 
 fn main() {
     App::new()
@@ -19,7 +20,7 @@ fn main() {
         .add_systems(Startup, setup)
         .add_systems(Update, draw_grid)
         .add_systems(Update, sprite_movement)
-        //.add_systems(Update, snake)
+        .add_systems(Update, snake)
         .run();
 }
 
@@ -39,11 +40,11 @@ struct Snake {
     head_pos: Vec2,
     head_direction_angle: f32,
     distance_from_last_turn: f32,
-    direction_angle: Vec<DirectionChange>,
-    // linear speed in meters per second
+    direction_changes: Vec<DirectionChange>,
+    //linear speed in meters per second
     movement_speed: f32,
-    // rotation speed in radians per second
-    rotation_speed: f32,
+    //rotation speed in radians per second
+    rotation_speed: f32
 }
 #[derive(Component)]
 struct DirectionChange {
@@ -51,9 +52,7 @@ struct DirectionChange {
     distance_from_last_turn: f32
 }
 
-fn setup(
-    mut commands: Commands,
-) {
+fn setup(mut commands: Commands) {
     commands.spawn(Camera2dBundle::default());
     for i in 0..3
     {
@@ -63,20 +62,25 @@ fn setup(
         });
     }
 }
-// fn snake(
-//     mut commands: Commands,
-//     mut gizmos: Gizmos,
-//     snake: &mut Mut<Snake>,
-//     keyboard_input: Res<ButtonInput<KeyCode>>
-// ) {
-//     let head_radius = 50.0;
-//     // snake.head_pos = Vec2::new(0.0, 0.0);
-//     // snake.head_direction_angle = 0.0;
-//     gizmos.circle_2d(Vec2::new(0.0, 0.0), head_radius, YELLOW);
-//
-//     if keyboard_input.pressed(KeyCode::ArrowRight) {
-//         //snake.head_direction_angle += 10.0;
-//     }
-//     if keyboard_input.pressed(KeyCode::ArrowLeft) {
-//         //snake.head_direction_angle -= 10.0;
-//     }
+fn snake(
+    commands: Commands,
+    mut gizmos: Gizmos,
+    mut snake_query: Query<&mut Snake>,
+    keyboard_input: Res<ButtonInput<KeyCode>>
+) {
+
+    for mut snake in &mut snake_query {
+        let head_radius = 50.0;
+        snake.head_pos = Vec2::new(0.0, 0.0);
+        snake.head_direction_angle = 0.0;
+
+        if keyboard_input.pressed(KeyCode::ArrowRight) {
+            snake.head_direction_angle += 10.0;
+        }
+        if keyboard_input.pressed(KeyCode::ArrowLeft) {
+            snake.head_direction_angle -= 10.0;
+        }
+        gizmos.circle_2d(Vec2::new(0.0, 0.0), head_radius, YELLOW);
+        //snake.head_pos += Vec2::new(0.0, 10.0);
+    }
+}

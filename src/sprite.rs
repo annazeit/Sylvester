@@ -4,7 +4,10 @@ use bevy::math::Vec2;
 use bevy::prelude::{Commands, Gizmos, Mut, Query, Res, Time};
 use crate::{Direction, Sprite};
 
-fn sprite_update(sprite: &mut Mut<Sprite>, time: &Res<Time>){
+fn sprite_update(
+    sprite: &mut Mut<Sprite>,
+    time: &Res<Time>
+){
     sprite.position = {
         let y_move = {
             match sprite.direction {
@@ -21,7 +24,11 @@ fn sprite_update(sprite: &mut Mut<Sprite>, time: &Res<Time>){
         sprite.direction = Direction::Up;
     }
 }
-fn sprite_animate(sprite: &mut Mut<Sprite>, time: &Res<Time>, gizmos: &mut Gizmos) {
+fn sprite_animate(
+    sprite: &mut Mut<Sprite>,
+    time: &Res<Time>,
+    gizmos: &mut Gizmos
+) {
     let steps = 30;
     for i in 0..steps {
         let position: Vec2 = {
@@ -55,10 +62,10 @@ fn sprite_animate(sprite: &mut Mut<Sprite>, time: &Res<Time>, gizmos: &mut Gizmo
 // The sprite is animated by changing its translation depending on the time that has passed since the last frame.
 pub fn sprite_movement(
     time: Res<Time>,
-    mut sprite_position: Query<&mut Sprite>,
+    mut sprite_query: Query<&mut Sprite>,
     mut gizmos: Gizmos,
 ) {
-    for mut sprite in &mut sprite_position {
+    for mut sprite in &mut sprite_query {
         sprite_update(&mut sprite, &time);
         sprite_animate(&mut sprite, &time, &mut gizmos);
     }
