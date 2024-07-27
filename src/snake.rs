@@ -1,6 +1,6 @@
 use bevy::app::{App, Plugin, Startup, Update};
 use bevy::color::palettes::basic::YELLOW;
-use bevy::color::palettes::css::BLUE;
+use bevy::color::palettes::css::{BLUE, GREEN};
 use bevy::input::ButtonInput;
 use bevy::math::Vec2;
 use bevy::prelude::{Commands, Component, Gizmos, KeyCode, Mut, Query, Res};
@@ -52,8 +52,8 @@ fn snake_update(
     keyboard_input: Res<ButtonInput<KeyCode>>
 ) {
     for mut snake in &mut snake_query {
-        let head_radius = 25.0;
-
+        let mut head_radius = 50.0;
+        let mut distance = head_radius * 2.0;
 
         let movement: f32 = {
             let unit = {
@@ -64,9 +64,7 @@ fn snake_update(
             unit * snake.movement_speed
         };
         let rotation: f32 = {
-            if keyboard_input.pressed(KeyCode::ArrowRight) {
-                1.0
-                }
+            if keyboard_input.pressed(KeyCode::ArrowRight) { 1.0 }
             else if keyboard_input.pressed(KeyCode::ArrowLeft) { -1.0 }
             else { 0.0 }
         };
@@ -77,14 +75,16 @@ fn snake_update(
         snake.head_pos += Vec2::new(x_head, y_head);
 
         gizmos.circle_2d(snake.head_pos, head_radius, YELLOW);
+        gizmos.circle_2d(snake.head_pos, head_radius / 2.0, YELLOW);
 
-        let distance = head_radius * 2.0;
-        let x_tail = f32::sin(snake.head_direction_angle - consts::PI) * distance;
-        let y_tail = f32::cos(snake.head_direction_angle - consts::PI) * distance;
-        let tail_pos = snake.head_pos + Vec2::new(x_tail, y_tail);
-
-
-        gizmos.circle_2d(tail_pos, 15.0, BLUE);
-
+        for i in 0..2 {
+            let x_tail = f32::sin(snake.head_direction_angle - consts::PI) * distance;
+            let y_tail = f32::cos(snake.head_direction_angle - consts::PI) * distance;
+            let tail_pos = snake.head_pos + Vec2::new(x_tail, y_tail);
+            head_radius -= 20.0;
+            distance += 75.0;
+            gizmos.circle_2d(tail_pos, head_radius, GREEN);
+            gizmos.circle_2d(tail_pos, head_radius / 2.0, GREEN);
+        }
     }
 }
