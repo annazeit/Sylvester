@@ -45,8 +45,8 @@ struct Snake {
     direction_changes: Vec<DirectionChange>,
     //linear speed in meters per second
     movement_speed: f32,
-    //rotation speed in radians per second
-    rotation_speed: f32
+    //rotation speed in degrees per second. this value defines how quickly the object changes direction
+    rotation_speed_in_degrees: f32
 }
 #[derive(Component)]
 struct DirectionChange {
@@ -72,8 +72,8 @@ fn setup(mut commands: Commands) {
             head_direction_angle: 0.0,
             distance_from_last_turn: 0.0,
             direction_changes: vec![],
-            movement_speed: 0.0,
-            rotation_speed: 0.0,
+            movement_speed: 5.0,
+            rotation_speed_in_degrees: 3.0,
         });
     }
 }
