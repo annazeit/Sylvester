@@ -9,19 +9,15 @@ use bevy::{
     }
 };
 use std::f32;
-use bevy::color::palettes::css::*;
-use bevy::input::keyboard::keyboard_input_system;
 use crate::grid::*;
-use crate::sprite::*;
-use crate::snake::snake;
 
 fn main() {
     App::new()
         .add_plugins((DefaultPlugins, Wireframe2dPlugin))
+        .add_plugins(crate::snake::SnakePlugin)
         .add_systems(Startup, setup)
         .add_systems(Update, draw_grid)
-        //.add_systems(Update, sprite_movement)
-        .add_systems(Update, snake)
+        .add_systems(Update, crate::sprite::sprite_movement)
         .run();
 }
 
@@ -36,24 +32,6 @@ struct Sprite {
     direction: Direction
 }
 
-#[derive(Component)]
-struct Snake {
-    name: String,
-    head_pos: Vec2,
-    head_direction_angle: f32,
-    distance_from_last_turn: f32,
-    direction_changes: Vec<DirectionChange>,
-    //linear speed in meters per second
-    movement_speed: f32,
-    //rotation speed in degrees per second. this value defines how quickly the object changes direction
-    rotation_speed_in_degrees: f32
-}
-#[derive(Component)]
-struct DirectionChange {
-    old_direction_angle: f32,
-    distance_from_last_turn: f32
-}
-
 fn setup(mut commands: Commands) {
     commands.spawn(Camera2dBundle::default());
 
@@ -65,15 +43,5 @@ fn setup(mut commands: Commands) {
         });
     }
 
-    for i in 0..1 {
-        commands.spawn(Snake {
-            name: format!("snake #{i}"),
-            head_pos: Vec2::new(i as f32 * 20.0, 0.0),
-            head_direction_angle: 0.0,
-            distance_from_last_turn: 0.0,
-            direction_changes: vec![],
-            movement_speed: 5.0,
-            rotation_speed_in_degrees: 3.0,
-        });
-    }
+
 }

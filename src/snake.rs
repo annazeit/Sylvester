@@ -1,10 +1,48 @@
+use bevy::app::{App, Plugin, Startup, Update};
 use bevy::color::palettes::basic::YELLOW;
 use bevy::input::ButtonInput;
 use bevy::math::Vec2;
-use bevy::prelude::{Commands, Gizmos, KeyCode, Query, Res};
-use crate::Snake;
+use bevy::prelude::{Commands, Component, Gizmos, KeyCode, Query, Res};
 
-pub fn snake(
+pub struct SnakePlugin;
+impl Plugin for SnakePlugin {
+    fn build (&self, app: &mut App) {
+        app.add_systems(Startup, snake_start);
+        app.add_systems(Update, snake_update);
+    }
+}
+fn snake_start(mut commands: Commands) {
+    for i in 0..1 {
+        commands.spawn(Snake {
+            name: format!("snake #{i}"),
+            head_pos: Vec2::new(i as f32 * 20.0, 0.0),
+            head_direction_angle: 0.0,
+            distance_from_last_turn: 0.0,
+            direction_changes: vec![],
+            movement_speed: 5.0,
+            rotation_speed_in_degrees: 3.0,
+        });
+    }}
+
+#[derive(Component)]
+struct Snake {
+    name: String,
+    head_pos: Vec2,
+    head_direction_angle: f32,
+    distance_from_last_turn: f32,
+    direction_changes: Vec<DirectionChange>,
+    //linear speed in meters per second
+    movement_speed: f32,
+    //rotation speed in degrees per second. this value defines how quickly the object changes direction
+    rotation_speed_in_degrees: f32
+}
+#[derive(Component)]
+struct DirectionChange {
+    old_direction_angle: f32,
+    distance_from_last_turn: f32
+}
+
+fn snake_update(
     commands: Commands,
     mut gizmos: Gizmos,
     mut snake_query: Query<&mut Snake>,
