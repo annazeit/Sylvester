@@ -1,5 +1,6 @@
 mod grid;
 mod sprite;
+mod snake;
 
 use bevy::{
     prelude::*,
@@ -12,13 +13,14 @@ use bevy::color::palettes::css::*;
 use bevy::input::keyboard::keyboard_input_system;
 use crate::grid::*;
 use crate::sprite::*;
+use crate::snake::snake;
 
 fn main() {
     App::new()
         .add_plugins((DefaultPlugins, Wireframe2dPlugin))
         .add_systems(Startup, setup)
         .add_systems(Update, draw_grid)
-        .add_systems(Update, sprite_movement)
+        //.add_systems(Update, sprite_movement)
         .add_systems(Update, snake)
         .run();
 }
@@ -63,7 +65,7 @@ fn setup(mut commands: Commands) {
         });
     }
 
-    for i in 0..2 {
+    for i in 0..1 {
         commands.spawn(Snake {
             name: format!("snake #{i}"),
             head_pos: Vec2::new(i as f32 * 20.0, 0.0),
@@ -73,24 +75,5 @@ fn setup(mut commands: Commands) {
             movement_speed: 0.0,
             rotation_speed: 0.0,
         });
-    }
-}
-fn snake(
-    commands: Commands,
-    mut gizmos: Gizmos,
-    mut snake_query: Query<&mut Snake>,
-    keyboard_input: Res<ButtonInput<KeyCode>>
-) {
-    for mut snake in &mut snake_query {
-        let head_radius = 50.0;
-
-        if keyboard_input.pressed(KeyCode::ArrowRight) {
-            snake.head_pos += Vec2::new(10.0, 0.0);
-        }
-        if keyboard_input.pressed(KeyCode::ArrowLeft) {
-            snake.head_pos += Vec2::new(-10.0, 0.0);
-        }
-        gizmos.circle_2d(snake.head_pos, head_radius, YELLOW);
-        //snake.head_pos += Vec2::new(0.0, 10.0);
     }
 }
