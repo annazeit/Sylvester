@@ -1,8 +1,36 @@
 use std::f32;
+use bevy::app::{App, Plugin, Startup, Update};
 use bevy::color::Color;
 use bevy::math::Vec2;
-use bevy::prelude::{Commands, Gizmos, Mut, Query, Res, Time};
-use crate::{Direction, Sprite};
+use bevy::prelude::{Commands, Component, Gizmos, Mut, Query, Res, Time};
+
+pub struct SpritePlugin;
+
+impl Plugin for SpritePlugin {
+    fn build (&self, app: &mut App) {
+        app.add_systems(Startup, sprite_start);
+        app.add_systems(Update, sprite_movement);
+    }
+}
+fn sprite_start(mut commands: Commands) {
+    for i in 0..3
+    {
+        commands.spawn(Sprite {
+            position: Vec2::new(i as f32 * 100.0 - 400., -100.0),
+            direction: Direction::Up,
+        });
+    }
+}
+enum Direction {
+    Up,
+    Down,
+}
+
+#[derive(Component)]
+struct Sprite {
+    position: Vec2,
+    direction: Direction
+}
 
 fn sprite_update(
     sprite: &mut Mut<Sprite>,

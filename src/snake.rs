@@ -43,10 +43,9 @@ struct DirectionChange {
 }
 
 fn snake_update(
-    commands: Commands,
     mut gizmos: Gizmos,
     mut snake_query: Query<&mut Snake>,
-    mut keyboard_input: Res<ButtonInput<KeyCode>>
+    keyboard_input: Res<ButtonInput<KeyCode>>
 ) {
     for mut snake in &mut snake_query {
         let head_radius = 50.0;
