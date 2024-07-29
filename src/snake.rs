@@ -2,7 +2,7 @@ use bevy::app::{App, Plugin, Startup, Update};
 use bevy::color::palettes::css::{GREEN, WHITE, YELLOW};
 use bevy::input::ButtonInput;
 use bevy::math::Vec2;
-use bevy::prelude::{Commands, Component, Gizmos, KeyCode, Mut, Query, Res};
+use bevy::prelude::{Commands, Component, Gizmos, KeyCode, Query, Res};
 use bevy::prelude::Time;
 use std::f32::*;
 use rand::Rng;
@@ -31,7 +31,7 @@ fn snake_start (mut commands: Commands) {
     }}
 
 fn food_start (mut commands: Commands) {
-    for i in 0..3 {
+    for _ in 0..3 {
         let pos: Vec2 = {
             let x = rand::thread_rng().gen_range(1..=100) as f32;
             let y = rand::thread_rng().gen_range(1..=100) as f32;
@@ -45,7 +45,7 @@ fn food_start (mut commands: Commands) {
 }
 
 fn food_is_eaten_by_any_snake(food: &Food, snake_query: &mut Query<&mut SnakeHead>) -> bool {
-    for mut snake in snake_query {
+    for snake in snake_query {
         if snake_eats_food(&snake, food) {
             return true;
         }
@@ -53,8 +53,7 @@ fn food_is_eaten_by_any_snake(food: &Food, snake_query: &mut Query<&mut SnakeHea
     return false;
 }
 
-pub fn food_draw(
-    mut commands: Commands,
+fn food_draw(
     mut gizmos: Gizmos,
     mut food_query: Query<&mut Food>,
     mut snake_query: Query<&mut SnakeHead>,
@@ -80,12 +79,6 @@ struct SnakeHead {
     movement_speed: f32,
     ///rotation speed in degrees per second. this value defines how quickly the object changes direction
     rotation_speed_in_degrees: f32
-}
-
-#[derive(Component)]
-struct DirectionChange {
-    old_direction_angle: f32,
-    distance_from_last_turn: f32
 }
 
 #[derive(Component)]
@@ -143,7 +136,6 @@ fn snake_eats_food(
 fn snake_update (
     mut gizmos: Gizmos,
     mut snake_query: Query<&mut SnakeHead>,
-    mut food_query: Query<&mut Food>,
     keyboard_input: Res<ButtonInput<KeyCode>>,
     time: Res<Time>,
 ) {
