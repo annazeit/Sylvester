@@ -1,10 +1,11 @@
 use bevy::app::{App, Plugin, Startup, Update};
-use bevy::color::palettes::basic::YELLOW;
-use bevy::color::palettes::css::{BLUE, GREEN, WHITE};
+use bevy::color::palettes::css::{BLUE, GREEN, WHITE, YELLOW};
 use bevy::input::ButtonInput;
 use bevy::math::Vec2;
 use bevy::prelude::{Commands, Component, Gizmos, KeyCode, Mut, Query, Res};
+use bevy::prelude::Time;
 use std::f32::*;
+use bevy::log::tracing_subscriber::fmt::time;
 use rand::Rng;
 
 pub struct SnakePlugin;
@@ -12,7 +13,7 @@ impl Plugin for SnakePlugin {
     fn build (&self, app: &mut App) {
         app.add_systems(Startup, snake_start);
         app.add_systems(Update, snake_update);
-        app.add_systems(Update, food_draw);
+        //app.add_systems(Update, food_draw);
     }
 }
 fn snake_start (mut commands: Commands) {
@@ -22,7 +23,7 @@ fn snake_start (mut commands: Commands) {
             head_direction_angle: 0.0,
             distance_from_last_turn: 0.0,
             direction_changes: vec![],
-            movement_speed: 5.0,
+            movement_speed: 150.0,
             rotation_speed_in_degrees: 3.0,
         });
     }}
@@ -31,16 +32,15 @@ pub fn food_draw(
     mut gizmos: Gizmos,
     mut food_query: Query<&mut Food>,
 ) {
+    let x = rand::thread_rng().gen_range(1..=100) as f32;
+    let y = rand::thread_rng().gen_range(1..=100) as f32;
     for i in 0..1 {
         commands.spawn(Food {
-            food_pos: Vec2::new(1000.0, 100.0),
+            food_pos: Vec2::new(x, y),
             movement_speed: 0.0,
         });
     }
     for mut food in &mut food_query {
-        let mut rng = rand::thread_rng();
-        let x: f64 = rng.gen();
-        let rand_num = x - 0.5;
         gizmos.circle_2d(food.food_pos, 10.0, WHITE);
     }
 }
@@ -83,13 +83,13 @@ fn keyboard_movement(keyboard_input: &Res<ButtonInput<KeyCode>>, snake: &SnakeHe
     unit * snake.movement_speed
 }
 
-fn keyboard_rotation(keyboard_input: &Res<ButtonInput<KeyCode>>, snake: &SnakeHead) -> f32 {
+fn keyboard_rotation(keyboard_input: &Res<ButtonInput<KeyCode>>, snake: &SnakeHead, time: &Res<Time>) -> f32 {
     let unit: f32 = {
         if keyboard_input.pressed(KeyCode::ArrowRight) { 1.0 }
         else if keyboard_input.pressed(KeyCode::ArrowLeft) { -1.0 }
         else { 0.0 }
     };
-    consts::PI / 180.0 * snake.rotation_speed_in_degrees * unit
+    consts::PI / 180.0 * snake.rotation_speed_in_degrees * unit * time.delta_seconds()
 }
 
 fn draw_tail(gizmos: &mut Gizmos, radius: f32, snake: &SnakeHead){
@@ -102,7 +102,7 @@ fn draw_tail(gizmos: &mut Gizmos, radius: f32, snake: &SnakeHead){
         };
 
         let tail_pos = snake.head_pos + shift_from_head;
-        let tail_radius = radius - (20.0 * i as f32) ;
+        let tail_radius = radius - (20.0 * i as f32);
         distance += 75.0;
         draw_node(gizmos, tail_pos, tail_radius);
     }
@@ -111,17 +111,18 @@ fn draw_tail(gizmos: &mut Gizmos, radius: f32, snake: &SnakeHead){
 fn snake_update (
     mut gizmos: Gizmos,
     mut snake_query: Query<&mut SnakeHead>,
-    keyboard_input: Res<ButtonInput<KeyCode>>
+    keyboard_input: Res<ButtonInput<KeyCode>>,
+    time: Res<Time>
 ) {
     for mut snake in &mut snake_query {
         let head_radius = 50.0;
 
-        snake.head_direction_angle += keyboard_rotation(&keyboard_input, &snake);;
+        snake.head_direction_angle += keyboard_rotation(&keyboard_input, &snake, &time) * (snake.movement_speed / 4.0);
 
         let head_move = {
             let movement = keyboard_movement(&keyboard_input, &snake);
-            let x_head = f32::sin(snake.head_direction_angle) * movement;
-            let y_head = f32::cos(snake.head_direction_angle) * movement;
+            let x_head = f32::sin(snake.head_direction_angle) * movement * time.delta_seconds();
+            let y_head = f32::cos(snake.head_direction_angle) * movement * time.delta_seconds();
             Vec2::new(x_head, y_head)
         };
 
