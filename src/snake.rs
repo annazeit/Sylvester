@@ -1,13 +1,34 @@
 use bevy::app::{App, Plugin, Startup, Update};
-use bevy::color::palettes::css::{GREEN, WHITE, YELLOW};
+use bevy::color::palettes::css::{YELLOW};
 use bevy::input::ButtonInput;
 use bevy::math::Vec2;
 use bevy::prelude::{Commands, Component, Gizmos, KeyCode, Query, Res};
 use bevy::prelude::Time;
 use std::f32::*;
-use rand::Rng;
+use bevy::color::{Color, Srgba};
+use rand::{Rng};
 
 pub struct SnakePlugin;
+
+#[derive(Component)]
+struct SnakeHead {
+    head_pos: Vec2,
+    head_direction_angle: f32,
+    head_radius: f32,
+    // distance_from_last_turn: f32,
+    // direction_changes: Vec<DirectionChange>,
+    ///linear speed in meters per second
+    movement_speed: f32,
+    ///rotation speed in degrees per second. this value defines how quickly the object changes direction
+    rotation_speed_in_degrees: f32
+}
+
+#[derive(Component)]
+pub struct Food {
+    food_pos: Vec2,
+    radius: f32,
+    color: Srgba,
+}
 
 impl Plugin for SnakePlugin {
     fn build (&self, app: &mut App) {
@@ -17,6 +38,13 @@ impl Plugin for SnakePlugin {
         app.add_systems(Update, food_draw);
     }
 }
+
+fn new_food_position() -> Vec2 {
+    let x = rand::thread_rng().gen_range(-200..=200) as f32;
+    let y = rand::thread_rng().gen_range(-200..=200) as f32;
+    Vec2::new(x, y)
+}
+
 fn snake_start (mut commands: Commands) {
     for i in 0..1 {
         commands.spawn(SnakeHead {
@@ -31,15 +59,14 @@ fn snake_start (mut commands: Commands) {
     }}
 
 fn food_start (mut commands: Commands) {
+    let mut g = rand::thread_rng();
     for _ in 0..3 {
-        let pos: Vec2 = {
-            let x = rand::thread_rng().gen_range(1..=100) as f32;
-            let y = rand::thread_rng().gen_range(1..=100) as f32;
-            Vec2::new(x, y)
-        };
+        let hue: f32 = g.gen();
+        let color: Srgba = Color::hsl(hue * 360.0, 0.95, 0.7).to_srgba();
         commands.spawn(Food {
-            food_pos: pos,
-            radius: 10.0
+            food_pos: new_food_position(),
+            radius: 10.0,
+            color: color,
         });
     }
 }
@@ -58,33 +85,13 @@ fn food_draw(
     mut food_query: Query<&mut Food>,
     mut snake_query: Query<&mut SnakeHead>,
 ) {
-    for food in &mut food_query {
-        let color = {
-            if food_is_eaten_by_any_snake(&food, &mut snake_query) { GREEN }
-            else { WHITE }
-        };
+    for mut food in &mut food_query {
+        if food_is_eaten_by_any_snake(&food, &mut snake_query) {
+            food.food_pos = new_food_position();
+        }
 
-        gizmos.circle_2d(food.food_pos, food.radius, color);
+        gizmos.circle_2d(food.food_pos, food.radius, food.color);
     }
-}
-
-#[derive(Component)]
-struct SnakeHead {
-    head_pos: Vec2,
-    head_direction_angle: f32,
-    head_radius: f32,
-    // distance_from_last_turn: f32,
-    // direction_changes: Vec<DirectionChange>,
-    ///linear speed in meters per second
-    movement_speed: f32,
-    ///rotation speed in degrees per second. this value defines how quickly the object changes direction
-    rotation_speed_in_degrees: f32
-}
-
-#[derive(Component)]
-pub struct Food {
-    food_pos: Vec2,
-    radius: f32
 }
 
 fn draw_node(gizmos: &mut Gizmos, position: Vec2, radius: f32) {
