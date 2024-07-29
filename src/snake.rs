@@ -5,12 +5,15 @@ use bevy::math::Vec2;
 use bevy::prelude::{Commands, Component, Gizmos, KeyCode, Mut, Query, Res};
 use bevy::prelude::Time;
 use std::f32::*;
+use rand::Rng;
 
 pub struct SnakePlugin;
+
 impl Plugin for SnakePlugin {
     fn build (&self, app: &mut App) {
         app.add_systems(Startup, snake_start);
         app.add_systems(Update, snake_update);
+        app.add_systems(Startup, food_start);
         app.add_systems(Update, food_draw);
     }
 }
@@ -27,25 +30,42 @@ fn snake_start (mut commands: Commands) {
         });
     }}
 
-pub fn food_draw(
-    mut commands: Commands,
-    mut gizmos: Gizmos,
-    mut food_query: Query<&mut Food>,
-) {
-    for i in 0..1 {
+fn food_start (mut commands: Commands) {
+    for i in 0..3 {
         let pos: Vec2 = {
-            // let x = rand::thread_rng().gen_range(1..=100) as f32;
-            // let y = rand::thread_rng().gen_range(1..=100) as f32;
-            Vec2::new(0.0, 200.0)
+            let x = rand::thread_rng().gen_range(1..=100) as f32;
+            let y = rand::thread_rng().gen_range(1..=100) as f32;
+            Vec2::new(x, y)
         };
         commands.spawn(Food {
             food_pos: pos,
             radius: 10.0
         });
     }
-    for food in &mut food_query {
-        gizmos.circle_2d(food.food_pos, food.radius, WHITE);
+}
 
+fn food_is_eaten_by_any_snake(food: &Food, snake_query: &mut Query<&mut SnakeHead>) -> bool {
+    for mut snake in snake_query {
+        if snake_eats_food(&snake, food) {
+            return true;
+        }
+    }
+    return false;
+}
+
+pub fn food_draw(
+    mut commands: Commands,
+    mut gizmos: Gizmos,
+    mut food_query: Query<&mut Food>,
+    mut snake_query: Query<&mut SnakeHead>,
+) {
+    for food in &mut food_query {
+        let color = {
+            if food_is_eaten_by_any_snake(&food, &mut snake_query) { GREEN }
+            else { WHITE }
+        };
+
+        gizmos.circle_2d(food.food_pos, food.radius, color);
     }
 }
 
@@ -113,16 +133,12 @@ fn draw_tail(gizmos: &mut Gizmos, radius: f32, snake: &SnakeHead){
     }
 }
 fn snake_eats_food(
-    snake: &Mut<SnakeHead>,
-    food: Mut<Food>,
-    gizmos: &mut Gizmos,
-) {
+    snake: &SnakeHead,
+    food: &Food
+) -> bool {
     let distance_vector = snake.head_pos - food.food_pos;
     let distance_between = ((distance_vector.x * distance_vector.x) + (distance_vector.y * distance_vector.y)).sqrt();
-    if distance_between < food.radius + snake.head_radius {
-        gizmos.circle_2d(food.food_pos, 10.0, GREEN);
-    }
-
+    distance_between < food.radius + snake.head_radius
 }
 fn snake_update (
     mut gizmos: Gizmos,
@@ -146,9 +162,5 @@ fn snake_update (
         draw_node(&mut gizmos, snake.head_pos, snake.head_radius);
 
         draw_tail(&mut gizmos, snake.head_radius, &snake);
-
-        for food in &mut food_query{
-            snake_eats_food(&snake, food, &mut gizmos);
-        }
     }
 }
