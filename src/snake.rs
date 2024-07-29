@@ -5,7 +5,6 @@ use bevy::math::Vec2;
 use bevy::prelude::{Commands, Component, Gizmos, KeyCode, Mut, Query, Res};
 use bevy::prelude::Time;
 use std::f32::*;
-use rand::Rng;
 
 pub struct SnakePlugin;
 impl Plugin for SnakePlugin {
@@ -32,7 +31,6 @@ pub fn food_draw(
     mut commands: Commands,
     mut gizmos: Gizmos,
     mut food_query: Query<&mut Food>,
-    time: Res<Time>
 ) {
     for i in 0..1 {
         let pos: Vec2 = {
@@ -42,12 +40,12 @@ pub fn food_draw(
         };
         commands.spawn(Food {
             food_pos: pos,
-            movement_speed: 0.0,
             radius: 10.0
         });
     }
-    for mut food in &mut food_query {
+    for food in &mut food_query {
         gizmos.circle_2d(food.food_pos, food.radius, WHITE);
+
     }
 }
 
@@ -70,10 +68,9 @@ struct DirectionChange {
     distance_from_last_turn: f32
 }
 
-#[derive(Component, Clone, Copy)]
-struct Food {
+#[derive(Component)]
+pub struct Food {
     food_pos: Vec2,
-    movement_speed: f32,
     radius: f32
 }
 
@@ -116,14 +113,14 @@ fn draw_tail(gizmos: &mut Gizmos, radius: f32, snake: &SnakeHead){
     }
 }
 fn snake_eats_food(
-    mut snake: &Mut<SnakeHead>,
-    mut food: Mut<Food>,
-    mut gizmos: &mut Gizmos,
+    snake: &Mut<SnakeHead>,
+    food: Mut<Food>,
+    gizmos: &mut Gizmos,
 ) {
-    let distance_vector = (snake.head_pos - food.food_pos);
+    let distance_vector = snake.head_pos - food.food_pos;
     let distance_between = ((distance_vector.x * distance_vector.x) + (distance_vector.y * distance_vector.y)).sqrt();
     if distance_between < food.radius + snake.head_radius {
-        gizmos.circle_2d(food.food_pos, 100.0, GREEN);
+        gizmos.circle_2d(food.food_pos, 10.0, GREEN);
     }
 
 }
@@ -150,7 +147,7 @@ fn snake_update (
 
         draw_tail(&mut gizmos, snake.head_radius, &snake);
 
-        for mut food in &mut food_query{
+        for food in &mut food_query{
             snake_eats_food(&snake, food, &mut gizmos);
         }
     }

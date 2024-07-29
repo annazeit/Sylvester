@@ -27,7 +27,7 @@ enum Direction {
 }
 
 #[derive(Component)]
-struct Sprite {
+pub struct Sprite {
     position: Vec2,
     direction: Direction
 }
