@@ -1,11 +1,10 @@
 use bevy::app::{App, Plugin, Startup, Update};
-use bevy::color::palettes::css::{BLUE, GREEN, WHITE, YELLOW};
+use bevy::color::palettes::css::{GREEN, WHITE, YELLOW};
 use bevy::input::ButtonInput;
 use bevy::math::Vec2;
 use bevy::prelude::{Commands, Component, Gizmos, KeyCode, Mut, Query, Res};
 use bevy::prelude::Time;
 use std::f32::*;
-use bevy::log::tracing_subscriber::fmt::time;
 use rand::Rng;
 
 pub struct SnakePlugin;
@@ -13,7 +12,7 @@ impl Plugin for SnakePlugin {
     fn build (&self, app: &mut App) {
         app.add_systems(Startup, snake_start);
         app.add_systems(Update, snake_update);
-        //app.add_systems(Update, food_draw);
+        app.add_systems(Update, food_draw);
     }
 }
 fn snake_start (mut commands: Commands) {
@@ -21,27 +20,34 @@ fn snake_start (mut commands: Commands) {
         commands.spawn(SnakeHead {
             head_pos: Vec2::new(0.0, i as f32 * -100.0),
             head_direction_angle: 0.0,
-            distance_from_last_turn: 0.0,
-            direction_changes: vec![],
+            head_radius: 50.0,
+            // distance_from_last_turn: 0.0,
+            // direction_changes: vec![],
             movement_speed: 150.0,
             rotation_speed_in_degrees: 3.0,
         });
     }}
+
 pub fn food_draw(
     mut commands: Commands,
     mut gizmos: Gizmos,
     mut food_query: Query<&mut Food>,
+    time: Res<Time>
 ) {
-    let x = rand::thread_rng().gen_range(1..=100) as f32;
-    let y = rand::thread_rng().gen_range(1..=100) as f32;
     for i in 0..1 {
+        let pos: Vec2 = {
+            // let x = rand::thread_rng().gen_range(1..=100) as f32;
+            // let y = rand::thread_rng().gen_range(1..=100) as f32;
+            Vec2::new(0.0, 200.0)
+        };
         commands.spawn(Food {
-            food_pos: Vec2::new(x, y),
+            food_pos: pos,
             movement_speed: 0.0,
+            radius: 10.0
         });
     }
     for mut food in &mut food_query {
-        gizmos.circle_2d(food.food_pos, 10.0, WHITE);
+        gizmos.circle_2d(food.food_pos, food.radius, WHITE);
     }
 }
 
@@ -49,11 +55,12 @@ pub fn food_draw(
 struct SnakeHead {
     head_pos: Vec2,
     head_direction_angle: f32,
-    distance_from_last_turn: f32,
-    direction_changes: Vec<DirectionChange>,
-    //linear speed in meters per second
+    head_radius: f32,
+    // distance_from_last_turn: f32,
+    // direction_changes: Vec<DirectionChange>,
+    ///linear speed in meters per second
     movement_speed: f32,
-    //rotation speed in degrees per second. this value defines how quickly the object changes direction
+    ///rotation speed in degrees per second. this value defines how quickly the object changes direction
     rotation_speed_in_degrees: f32
 }
 
@@ -63,10 +70,11 @@ struct DirectionChange {
     distance_from_last_turn: f32
 }
 
-#[derive(Component)]
+#[derive(Component, Clone, Copy)]
 struct Food {
     food_pos: Vec2,
     movement_speed: f32,
+    radius: f32
 }
 
 fn draw_node(gizmos: &mut Gizmos, position: Vec2, radius: f32) {
@@ -107,16 +115,26 @@ fn draw_tail(gizmos: &mut Gizmos, radius: f32, snake: &SnakeHead){
         draw_node(gizmos, tail_pos, tail_radius);
     }
 }
+fn snake_eats_food(
+    mut snake: &Mut<SnakeHead>,
+    mut food: Mut<Food>,
+    mut gizmos: &mut Gizmos,
+) {
+    let distance_vector = (snake.head_pos - food.food_pos);
+    let distance_between = ((distance_vector.x * distance_vector.x) + (distance_vector.y * distance_vector.y)).sqrt();
+    if distance_between < food.radius + snake.head_radius {
+        gizmos.circle_2d(food.food_pos, 100.0, GREEN);
+    }
 
+}
 fn snake_update (
     mut gizmos: Gizmos,
     mut snake_query: Query<&mut SnakeHead>,
+    mut food_query: Query<&mut Food>,
     keyboard_input: Res<ButtonInput<KeyCode>>,
-    time: Res<Time>
+    time: Res<Time>,
 ) {
     for mut snake in &mut snake_query {
-        let head_radius = 50.0;
-
         snake.head_direction_angle += keyboard_rotation(&keyboard_input, &snake, &time) * (snake.movement_speed / 4.0);
 
         let head_move = {
@@ -128,8 +146,12 @@ fn snake_update (
 
         snake.head_pos += head_move;
 
-        draw_node(&mut gizmos, snake.head_pos, head_radius);
+        draw_node(&mut gizmos, snake.head_pos, snake.head_radius);
 
-        draw_tail(&mut gizmos, head_radius, &snake);
+        draw_tail(&mut gizmos, snake.head_radius, &snake);
+
+        for mut food in &mut food_query{
+            snake_eats_food(&snake, food, &mut gizmos);
+        }
     }
 }
