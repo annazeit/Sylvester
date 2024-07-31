@@ -131,7 +131,7 @@ fn draw_food(
                 let distance_vector = origin - food.food_pos;
                 ((distance_vector.x * distance_vector.x) + (distance_vector.y * distance_vector.y)).sqrt()
             };
-            if distance_from_origin_to_food > bound.radius {
+            if distance_from_origin_to_food > (bound.radius - food.radius) {
                 food.direction = new_food_direction()
             }
         }
