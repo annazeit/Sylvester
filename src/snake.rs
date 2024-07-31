@@ -1,5 +1,5 @@
 use bevy::app::{App, Plugin, Startup, Update};
-use bevy::color::palettes::css::{YELLOW};
+use bevy::color::palettes::css::{GREEN, RED, YELLOW};
 use bevy::input::ButtonInput;
 use bevy::math::Vec2;
 use bevy::prelude::{Commands, Component, Gizmos, KeyCode, Query, Res};
@@ -26,8 +26,14 @@ struct SnakeHead {
 #[derive(Component)]
 pub struct Food {
     food_pos: Vec2,
+    direction: f32,
     radius: f32,
     color: Srgba,
+}
+#[derive(Component)]
+pub struct Bound {
+    bound_pos: Vec2,
+    size: Vec2,
 }
 
 impl Plugin for SnakePlugin {
@@ -35,14 +41,27 @@ impl Plugin for SnakePlugin {
         app.add_systems(Startup, snake_start);
         app.add_systems(Update, snake_update);
         app.add_systems(Startup, food_start);
-        app.add_systems(Update, food_draw);
+        app.add_systems(Update, draw_food);
+        app.add_systems(Update, bound_start);
+        app.add_systems(Update, draw_bound);
     }
 }
 
-fn new_food_position() -> Vec2 {
-    let x = rand::thread_rng().gen_range(-200..=200) as f32;
-    let y = rand::thread_rng().gen_range(-200..=200) as f32;
-    Vec2::new(x, y)
+fn bound_start(mut commands: Commands) {
+    for i in 0..1 {
+        commands.spawn(Bound{
+            bound_pos: Vec2::new(0.0, 0.0),
+            size: Vec2::new(1000.0, 500.0)
+        });
+    }
+}
+fn draw_bound(
+    mut gizmos: Gizmos,
+    mut bound_query: Query<&mut Bound>,
+) {
+    for bound in &mut bound_query{
+        gizmos.rect_2d(bound.bound_pos, 0.0, bound.size, RED);
+    }
 }
 
 fn snake_start (mut commands: Commands) {
@@ -51,8 +70,6 @@ fn snake_start (mut commands: Commands) {
             head_pos: Vec2::new(0.0, i as f32 * -100.0),
             head_direction_angle: 0.0,
             head_radius: 50.0,
-            // distance_from_last_turn: 0.0,
-            // direction_changes: vec![],
             movement_speed: 150.0,
             rotation_speed_in_degrees: 3.0,
         });
@@ -65,10 +82,21 @@ fn food_start (mut commands: Commands) {
         let color: Srgba = Color::hsl(hue * 360.0, 0.95, 0.7).to_srgba();
         commands.spawn(Food {
             food_pos: new_food_position(),
+            direction: new_food_direction(),
             radius: 10.0,
             color: color,
         });
     }
+}
+
+fn new_food_position() -> Vec2 {
+    let x = rand::thread_rng().gen_range(-200..=200) as f32;
+    let y = rand::thread_rng().gen_range(-200..=200) as f32;
+    Vec2::new(x, y)
+}
+fn new_food_direction() -> f32 {
+    let num = rand::thread_rng().gen_range(-180..=180) as f32;
+    num
 }
 
 fn food_is_eaten_by_any_snake(food: &Food, snake_query: &mut Query<&mut SnakeHead>) -> bool {
@@ -80,7 +108,7 @@ fn food_is_eaten_by_any_snake(food: &Food, snake_query: &mut Query<&mut SnakeHea
     return false;
 }
 
-fn food_draw(
+fn draw_food(
     mut gizmos: Gizmos,
     mut food_query: Query<&mut Food>,
     mut snake_query: Query<&mut SnakeHead>,
@@ -89,7 +117,13 @@ fn food_draw(
         if food_is_eaten_by_any_snake(&food, &mut snake_query) {
             food.food_pos = new_food_position();
         }
+        let food_move = {
+            let x_head = f32::sin(food.direction);
+            let y_head = f32::cos(food.direction);
+            Vec2::new(x_head, y_head)
+        };
 
+        food.food_pos += food_move;
         gizmos.circle_2d(food.food_pos, food.radius, food.color);
     }
 }
