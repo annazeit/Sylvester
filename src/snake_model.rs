@@ -1,18 +1,14 @@
-use bevy::input::ButtonInput;
 use bevy::math::Vec2;
-use bevy::prelude::{Component, KeyCode, Res};
-use std::f32::*;
+use bevy::prelude::{Component};
 
 #[derive(Component)]
 pub struct SnakeHead {
     pub head_pos: Vec2,
     pub head_direction_angle: f32,
     pub head_radius: f32,
-    // distance_from_last_turn: f32,
-    // direction_changes: Vec<DirectionChange>,
-    ///linear speed in meters per second
+    //linear speed in meters per second
     pub movement_speed: f32,
-    ///rotation speed in degrees per second. this value defines how quickly the object changes direction
+    //rotation speed in degrees per second. this value defines how quickly the object changes direction
     pub rotation_speed_in_degrees: f32
 }
 
@@ -52,13 +48,9 @@ pub fn head_move_pure(keyboard_up_down_input: SnakeMoveDirection, time_delta_sec
     Vec2::new(x_head, y_head)
 }
 
-pub fn add(a: i32, b: i32) -> i32 {
-    a + b
-}
-
 #[cfg(test)]
 mod tests {
-    // Note this useful idiom: importing names from outer (for mod tests) scope.
+    use std::f32::consts;
     use super::*;
 
     fn assert_vec2_eq(a: Vec2, b: Vec2){
