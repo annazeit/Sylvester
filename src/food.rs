@@ -44,7 +44,7 @@ fn bound_start(mut commands: Commands) {
     });
 }
 fn score_start(mut commands: Commands, asset_server: Res<AssetServer>) {
-    let font = asset_server.load("resources/MovistarTextRegular.ttf");
+    let font = asset_server.load("MovistarTextRegular.ttf");
     let text_style = TextStyle {
         font: font.clone(),
         font_size: 50.0,
