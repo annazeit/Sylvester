@@ -63,15 +63,12 @@ fn score_start(mut commands: Commands, asset_server: Res<AssetServer>) {
     ));
 }
 fn food_start (mut commands: Commands) {
-    let mut rnd = rand::thread_rng();
     for _ in 0..5 {
-        let hue: f32 = rnd.gen();
-        let color: Srgba = Color::hsl(hue * 360.0, 0.95, 0.7).to_srgba();
         commands.spawn(Food {
             food_pos: new_food_position(),
             direction: new_food_direction(),
             radius: 10.0,
-            color,
+            color: new_food_color(),
         });
     }
 }
@@ -94,10 +91,12 @@ fn new_food_direction() -> f32 {
     let num = rand::thread_rng().gen_range(-180..=180) as f32;
     num
 }
-// fn new_food_color() -> Srgba {
-//     let hue: f32 = rnd.gen();
-//     let color: Srgba = Color::hsl(hue * 360.0, 0.95, 0.7).to_srgba();
-// }
+fn new_food_color() -> Srgba {
+    let mut rnd = rand::thread_rng();
+    let hue: f32 = rnd.gen();
+    let color: Srgba = Color::hsl(hue * 360.0, 0.95, 0.7).to_srgba();
+    color
+}
 
 fn food_is_eaten_by_any_snake(food: &Food, snake_query: &mut Query<&mut SnakeHead>) -> bool {
     for snake in snake_query {
@@ -128,6 +127,7 @@ fn draw_food(
         if food_is_eaten_by_any_snake(&food, &mut snake_query) {
             food.food_pos = new_food_position();
             food.direction = new_food_direction();
+            food.color = new_food_color();
 
             for (mut text, mut score) in &mut score_query {
                 score.score_num += 1;
