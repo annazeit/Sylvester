@@ -6,9 +6,7 @@ mod food;
 
 use bevy::{
     prelude::*,
-    sprite:: {
-        Wireframe2dPlugin
-    }
+    sprite::Wireframe2dPlugin,
 };
 use crate::grid::*;
 

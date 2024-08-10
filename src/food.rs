@@ -23,8 +23,7 @@ pub struct Bound {
 
 #[derive(Component)]
 struct Score {
-    score_num: i32,
-    score_text: String
+    score_num: i32
 }
 
 impl Plugin for FoodPlugin {
@@ -59,7 +58,7 @@ fn score_start(mut commands: Commands, asset_server: Res<AssetServer>) {
             transform: Transform::from_xyz(0.0, 200.0, 0.0),
             ..default()
         },
-        Score { score_num: 0, score_text: "score:".parse().unwrap() },
+        Score { score_num: 0 }
     ));
 }
 fn food_start (mut commands: Commands) {
@@ -127,8 +126,8 @@ fn draw_food(
 
             for (mut text, mut score) in &mut score_query {
                 score.score_num += 1;
-                //text.sections[0].value = score.score_text.clone();
-                text.sections[0].value = score.score_num.to_string();
+                let score_string = score.score_num.to_string();
+                text.sections[0].value = format!("Score: {score_string}");
             }
         }
 
