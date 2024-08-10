@@ -2,7 +2,7 @@ use bevy::app::{App, Plugin, Startup, Update};
 use bevy::color::palettes::basic::RED;
 use bevy::color::{Color, Srgba};
 use bevy::math::Vec2;
-use bevy::prelude::{Commands, Component, Gizmos, Query};
+use bevy::prelude::*;
 use rand::Rng;
 use crate::snake_model::SnakeHead;
 
@@ -21,11 +21,18 @@ pub struct Bound {
     radius: f32,
 }
 
+#[derive(Component)]
+struct Score {
+    score_num: i32,
+    score_text: String
+}
+
 impl Plugin for FoodPlugin {
     fn build (&self, app: &mut App) {
         app.add_systems(Startup, food_start);
+        app.add_systems(Startup, score_start);
+        app.add_systems(Startup, bound_start);
         app.add_systems(Update, draw_food);
-        app.add_systems(Update, bound_start);
         app.add_systems(Update, draw_bound);
     }
 }
@@ -36,19 +43,28 @@ fn bound_start(mut commands: Commands) {
         radius: 500.0,
     });
 }
+fn score_start(mut commands: Commands, asset_server: Res<AssetServer>) {
+    let font = asset_server.load("C:/Users/annaz/MovistarTextRegular.ttf");
+    let text_style = TextStyle {
+        font: font.clone(),
+        font_size: 50.0,
+        ..default()
+    };
+    let text_justification = JustifyText::Center;
 
-fn draw_bound(
-    mut gizmos: Gizmos,
-    bound_query: Query<&mut Bound>,
-) {
-    for bound in &bound_query{
-        gizmos.circle_2d(bound.bound_pos, bound.radius, RED);
-    }
+    commands.spawn((
+        Text2dBundle {
+            text: Text::from_section("no score", text_style.clone())
+                .with_justify(text_justification),
+            transform: Transform::from_xyz(0.0, 200.0, 0.0),
+            ..default()
+        },
+        Score { score_num: 0, score_text: "score:".parse().unwrap() },
+    ));
 }
-
 fn food_start (mut commands: Commands) {
     let mut rnd = rand::thread_rng();
-    for _ in 0..3 {
+    for _ in 0..5 {
         let hue: f32 = rnd.gen();
         let color: Srgba = Color::hsl(hue * 360.0, 0.95, 0.7).to_srgba();
         commands.spawn(Food {
@@ -57,6 +73,15 @@ fn food_start (mut commands: Commands) {
             radius: 10.0,
             color,
         });
+    }
+}
+
+fn draw_bound(
+    mut gizmos: Gizmos,
+    bound_query: Query<&mut Bound>,
+) {
+    for bound in &bound_query{
+        gizmos.circle_2d(bound.bound_pos, bound.radius, RED);
     }
 }
 
@@ -93,11 +118,20 @@ fn draw_food(
     bound_query: Query<&mut Bound>,
     mut food_query: Query<&mut Food>,
     mut snake_query: Query<&mut SnakeHead>,
+    mut score_query: Query<(&mut Text, &mut Score)>,
 ) {
     for mut food in &mut food_query {
         if food_is_eaten_by_any_snake(&food, &mut snake_query) {
             food.food_pos = new_food_position();
+            food.direction = new_food_direction();
+
+            for (mut text, mut score) in &mut score_query {
+                score.score_num += 1;
+                //text.sections[0].value = score.score_text.clone();
+                text.sections[0].value = score.score_num.to_string();
+            }
         }
+
         let food_move = {
             let x = f32::sin(food.direction);
             let y = f32::cos(food.direction);
@@ -113,7 +147,7 @@ fn draw_food(
                 let distance_vector = origin - food.food_pos;
                 ((distance_vector.x * distance_vector.x) + (distance_vector.y * distance_vector.y)).sqrt()
             };
-            if distance_from_origin_to_food > (bound.radius - food.radius) {
+            if distance_from_origin_to_food > (bound.radius - (food.radius * 2.0 )) {
                 food.direction = new_food_direction()
             }
         }
