@@ -33,7 +33,7 @@ fn keyboard_movement_up_down_impure(keyboard_input: &Res<ButtonInput<KeyCode>>) 
     else { SnakeMoveDirection::Stop }
 }
 
-fn keyboard_rotation(keyboard_input: &Res<ButtonInput<KeyCode>>, snake: &SnakeHead, time: &Res<Time>) -> f32 {
+fn keyboard_rotation(keyboard_input: &Res<ButtonInput<KeyCode>>, snake: &SnakeModel, time: &Res<Time>) -> f32 {
     let unit: f32 = {
         if keyboard_input.pressed(KeyCode::ArrowRight) { 1.0 }
         else if keyboard_input.pressed(KeyCode::ArrowLeft) { -1.0 }
@@ -42,7 +42,7 @@ fn keyboard_rotation(keyboard_input: &Res<ButtonInput<KeyCode>>, snake: &SnakeHe
     consts::PI / 180.0 * snake.rotation_speed_in_degrees * unit * time.delta_seconds()
 }
 
-fn draw_tail(gizmos: &mut Gizmos, radius: f32, snake: &SnakeHead){
+fn draw_tail(gizmos: &mut Gizmos, radius: f32, snake: &SnakeModel){
     let mut distance = radius * 2.0;
     for i in 1..3 {
         let shift_from_head: Vec2 = {
@@ -60,20 +60,33 @@ fn draw_tail(gizmos: &mut Gizmos, radius: f32, snake: &SnakeHead){
 
 fn snake_update (
     mut gizmos: Gizmos,
-    mut snake_query: Query<&mut SnakeHead>,
+    mut snake_query: Query<&mut SnakeModel>,
     keyboard_input: Res<ButtonInput<KeyCode>>,
     time: Res<Time>,
 ) {
     for mut snake in &mut snake_query {
         snake.head_direction_angle += keyboard_rotation(&keyboard_input, &snake, &time) * (snake.movement_speed / 4.0);
 
-        let head_move: Vec2 = {
+        let head_move: SnakeModelUpdate = {
             let keyboard_up_down_input = keyboard_movement_up_down_impure(&keyboard_input);
             head_move_pure(keyboard_up_down_input, time.delta_seconds(), &snake)
         };
 
-        snake.head_pos += head_move;
-
+        snake.head_pos += head_move.new_head_pos;
+        match head_move.trace_point_to_add {
+            Some(point) => snake.trace.push_front(point),
+            None => (),
+        }
+        let mut current_pos = snake.head_pos;
+        let mut total_distance = 0.0;
+        for i in snake.trace.iter() {
+            total_distance += current_pos.distance(*i);
+            gizmos.line_2d(current_pos, *i, PINK);
+            current_pos = *i;
+            if total_distance > 300.0 {
+                break;
+            }
+        }
         draw_node(&mut gizmos, snake.head_pos, snake.head_radius);
 
         draw_tail(&mut gizmos, snake.head_radius, &snake);

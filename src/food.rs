@@ -4,7 +4,7 @@ use bevy::color::{Color, Srgba};
 use bevy::math::Vec2;
 use bevy::prelude::*;
 use rand::Rng;
-use crate::snake_model::SnakeHead;
+use crate::snake_model::SnakeModel;
 
 pub struct FoodPlugin;
 
@@ -97,7 +97,7 @@ fn new_food_color() -> Srgba {
     color
 }
 
-fn food_is_eaten_by_any_snake(food: &Food, snake_query: &mut Query<&mut SnakeHead>) -> bool {
+fn food_is_eaten_by_any_snake(food: &Food, snake_query: &mut Query<&mut SnakeModel>) -> bool {
     for snake in snake_query {
         if snake_eats_food(&snake, food) {
             return true;
@@ -107,7 +107,7 @@ fn food_is_eaten_by_any_snake(food: &Food, snake_query: &mut Query<&mut SnakeHea
 }
 
 fn snake_eats_food(
-    snake: &SnakeHead,
+    snake: &SnakeModel,
     food: &Food
 ) -> bool {
     let distance_vector = snake.head_pos - food.food_pos;
@@ -119,7 +119,7 @@ fn draw_food(
     mut gizmos: Gizmos,
     bound_query: Query<&mut Bound>,
     mut food_query: Query<&mut Food>,
-    mut snake_query: Query<&mut SnakeHead>,
+    mut snake_query: Query<&mut SnakeModel>,
     mut score_query: Query<(&mut Text, &mut Score)>,
 ) {
     for mut food in &mut food_query {

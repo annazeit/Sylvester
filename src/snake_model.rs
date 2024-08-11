@@ -1,42 +1,52 @@
 use bevy::math::Vec2;
 use bevy::prelude::{Component};
+use std::collections::LinkedList;
 
 #[derive(Component)]
-pub struct SnakeHead {
+pub struct SnakeModel {
     pub head_pos: Vec2,
     pub head_direction_angle: f32,
     pub head_radius: f32,
     //linear speed in meters per second
     pub movement_speed: f32,
     //rotation speed in degrees per second. this value defines how quickly the object changes direction
-    pub rotation_speed_in_degrees: f32
+    pub rotation_speed_in_degrees: f32,
+    pub trace: LinkedList<Vec2>,
+    pub tracing_step: f32
 }
 
+pub struct SnakeModelUpdate {
+    pub new_head_pos: Vec2,
+    pub trace_point_to_add: Option<Vec2>
+}
 pub enum  SnakeMoveDirection {
     Forward,
     Backward,
     Stop
 }
 
-fn snake_head_new(i: i32) -> SnakeHead {
-    SnakeHead {
-        head_pos: Vec2::new(0.0, i as f32 * -100.0),
+fn snake_model_new(i: i32) -> SnakeModel {
+    let head_pos = Vec2::new(0.0, i as f32 * -100.0);
+    SnakeModel {
+        head_pos,
         head_direction_angle: 0.0,
         head_radius: 50.0,
         movement_speed: 150.0,
         rotation_speed_in_degrees: 3.0,
+        trace: LinkedList::from([head_pos]),
+        tracing_step: 10.0
     }
 }
 
-pub fn snake_head_new_list() -> Vec<SnakeHead> {
-    let mut result: Vec<SnakeHead> = Vec::new();
+pub fn snake_head_new_list() -> Vec<SnakeModel> {
+    let mut result: Vec<SnakeModel> = Vec::new();
     for i in 0..1 {
-        result.push(snake_head_new(i));
+        result.push(snake_model_new(i));
     }
     result
 }
 
-pub fn head_move_pure(keyboard_up_down_input: SnakeMoveDirection, time_delta_seconds: f32, snake: &SnakeHead) -> Vec2 {
+pub fn head_move_pure(keyboard_up_down_input: SnakeMoveDirection, time_delta_seconds: f32, snake: &SnakeModel) -> SnakeModelUpdate {
     let keyboard_up_down_input_ratio: f32 = match keyboard_up_down_input {
         SnakeMoveDirection::Forward => { 1.0 }
         SnakeMoveDirection::Backward => { -1.0 }
@@ -45,7 +55,23 @@ pub fn head_move_pure(keyboard_up_down_input: SnakeMoveDirection, time_delta_sec
     let movement = keyboard_up_down_input_ratio * snake.movement_speed;
     let x_head = f32::sin(snake.head_direction_angle) * movement * time_delta_seconds;
     let y_head = f32::cos(snake.head_direction_angle) * movement * time_delta_seconds;
-    Vec2::new(x_head, y_head)
+
+    let new_head_move = Vec2::new(x_head, y_head);
+    let last_trace_point = snake.trace.front().unwrap();
+
+    let distance_between = (snake.head_pos + new_head_move).distance(*last_trace_point);
+    let trace_point_to_add = {
+        if distance_between >= snake.tracing_step {
+            Some(snake.head_pos + new_head_move)
+        }
+        else { None }
+    };
+
+    SnakeModelUpdate{
+        new_head_pos: new_head_move,
+        trace_point_to_add
+    }
+
 }
 
 #[cfg(test)]
@@ -63,47 +89,83 @@ mod tests {
 
     #[test]
     fn no_move_because_not_key_input() {
-        let actual_move = head_move_pure(SnakeMoveDirection::Stop, 10.0, &snake_head_new(0));
+        let mut snake = snake_model_new(0);
+        snake.tracing_step = 50.0;
+        let actual_move = head_move_pure(SnakeMoveDirection::Stop, 10.0, &snake);
         let expected_move = Vec2::new(0.0, 0.0);
-        assert_vec2_eq(actual_move, expected_move);
+        assert_vec2_eq(actual_move.new_head_pos, expected_move);
+        assert_eq!(actual_move.trace_point_to_add, None)
     }
 
     #[test]
     fn move_forward_north() {
-        let mut snake = snake_head_new(0);
+        let mut snake = snake_model_new(0);
+        snake.tracing_step = 50.0;
         snake.head_direction_angle = 0.0;
         snake.movement_speed = 3.0;
         let actual_move = head_move_pure(crate::snake_model::SnakeMoveDirection::Forward, 10.0, &snake);
         let expected_move = Vec2::new(0.0, 30.0);
-        assert_vec2_eq(actual_move, expected_move);
+        assert_vec2_eq(actual_move.new_head_pos, expected_move);
+        assert_eq!(actual_move.trace_point_to_add, None)
     }
 
     #[test]
     fn move_backward_south() {
-        let mut snake = snake_head_new(0);
+        let mut snake = snake_model_new(0);
+        snake.tracing_step = 50.0;
         snake.movement_speed = 3.0;
         let actual_move = head_move_pure(crate::snake_model::SnakeMoveDirection::Backward, 10.0, &snake);
         let expected_move = Vec2::new(0.0, -30.0);
-        assert_vec2_eq(actual_move, expected_move);
+        assert_vec2_eq(actual_move.new_head_pos, expected_move);
+        assert_eq!(actual_move.trace_point_to_add, None)
     }
 
     #[test]
     fn move_forward_south() {
-        let mut snake = snake_head_new(0);
+        let mut snake = snake_model_new(0);
+        snake.tracing_step = 50.0;
         snake.head_direction_angle = consts::PI;
         snake.movement_speed = 3.0;
         let actual_move = head_move_pure(crate::snake_model::SnakeMoveDirection::Forward, 10.0, &snake);
         let expected_move = Vec2::new(0.0, -30.0);
-        assert_vec2_eq(actual_move, expected_move);
+        assert_vec2_eq(actual_move.new_head_pos, expected_move);
+        assert_eq!(actual_move.trace_point_to_add, None)
     }
 
     #[test]
     fn move_backward_north() {
-        let mut snake = snake_head_new(0);
+        let mut snake = snake_model_new(0);
+        snake.tracing_step = 50.0;
         snake.head_direction_angle = consts::PI;
         snake.movement_speed = 3.0;
         let actual_move = head_move_pure(crate::snake_model::SnakeMoveDirection::Backward, 10.0, &snake);
         let expected_move = Vec2::new(0.0, 30.0);
-        assert_vec2_eq(actual_move, expected_move);
+        assert_vec2_eq(actual_move.new_head_pos, expected_move);
+        assert_eq!(actual_move.trace_point_to_add, None)
+    }
+
+    #[test]
+    fn trace_track_move_up() {
+        let mut snake = snake_model_new(0);
+        snake.tracing_step = 50.0;
+        snake.head_direction_angle = 0.0;
+        snake.movement_speed = 5.0;
+        let actual_move = head_move_pure(crate::snake_model::SnakeMoveDirection::Forward, 10.0, &snake);
+        let expected_move = Vec2::new(0.0, 50.0);
+        assert!(actual_move.trace_point_to_add.is_some());
+        assert_vec2_eq(actual_move.trace_point_to_add.unwrap(), expected_move)
+    }
+
+    #[test]
+    fn trace_track_move_up_with_diff_headpos() {
+        let mut snake = snake_model_new(0);
+        snake.tracing_step = 50.0;
+        snake.head_pos = Vec2::new(0.0, 100.0);
+        snake.head_direction_angle = 0.0;
+        snake.movement_speed = 5.0;
+        let actual_move = head_move_pure(crate::snake_model::SnakeMoveDirection::Forward, 10.0, &snake);
+        let expected_move = Vec2::new(0.0, 150.0);
+        assert!(actual_move.trace_point_to_add.is_some());
+        assert_vec2_eq(actual_move.trace_point_to_add.unwrap(), expected_move)
     }
 }
