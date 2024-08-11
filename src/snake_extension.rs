@@ -74,15 +74,22 @@ fn snake_update (
 
         snake.head_pos += head_move.new_head_pos;
         match head_move.trace_point_to_add {
-            Some(point) => snake.trace.push_front(point),
+            Some(point) => {
+                snake.trace_counter += 1;
+                let trace_item = TraceItem {
+                    pos: point,
+                    index: snake.trace_counter
+                };
+                snake.trace.push_front(trace_item);
+            },
             None => (),
         }
         let mut current_pos = snake.head_pos;
         let mut total_distance = 0.0;
         for i in snake.trace.iter() {
-            total_distance += current_pos.distance(*i);
-            gizmos.line_2d(current_pos, *i, PINK);
-            current_pos = *i;
+            total_distance += current_pos.distance(i.pos);
+            gizmos.line_2d(current_pos, i.pos, PINK);
+            current_pos = i.pos;
             if total_distance > 300.0 {
                 break;
             }
