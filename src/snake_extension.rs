@@ -90,6 +90,7 @@ fn snake_update (
 
         let steps = 30;
         let mut color_change = 0;
+        let mut last_trace_index_before_clean = 0;
         for i in snake.trace.iter() {
             total_distance += current_pos.distance(i.pos);
             let color = Color::hsl(360.0 * color_change as f32 / steps as f32, 0.95, 0.7);
@@ -97,9 +98,14 @@ fn snake_update (
             gizmos.line_2d(current_pos, i.pos, color);
             current_pos = i.pos;
             if total_distance > 300.0 {
+                last_trace_index_before_clean = i.index;
                 break;
             }
         }
+        clear_extra_traces(&mut snake.trace, last_trace_index_before_clean);
+
+        println!("Trace list length: {:?}", snake.trace.len());
+
         draw_node(&mut gizmos, snake.head_pos, snake.head_radius);
 
         draw_tail(&mut gizmos, snake.head_radius, &snake);
