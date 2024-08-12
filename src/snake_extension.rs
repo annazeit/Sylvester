@@ -5,6 +5,7 @@ use bevy::math::Vec2;
 use bevy::prelude::{Commands, Gizmos, KeyCode, Query, Res};
 use bevy::prelude::Time;
 use std::f32::*;
+use bevy::prelude::Color;
 use crate::snake_model::*;
 
 
@@ -86,9 +87,14 @@ fn snake_update (
         }
         let mut current_pos = snake.head_pos;
         let mut total_distance = 0.0;
+
+        let steps = 30;
+        let mut color_change = 0;
         for i in snake.trace.iter() {
             total_distance += current_pos.distance(i.pos);
-            gizmos.line_2d(current_pos, i.pos, PINK);
+            let color = Color::hsl(360.0 * color_change as f32 / steps as f32, 0.95, 0.7);
+            color_change += 1;
+            gizmos.line_2d(current_pos, i.pos, color);
             current_pos = i.pos;
             if total_distance > 300.0 {
                 break;
