@@ -21,7 +21,8 @@ pub struct SnakeModel {
     pub rotation_speed_in_degrees: f32,
     pub trace_counter: i64,
     pub trace: LinkedList<TraceItem>,
-    pub tracing_step: f32
+    pub tracing_step: f32,
+    pub size: i32,
 }
 
 pub struct SnakeModelUpdate {
@@ -48,7 +49,8 @@ fn snake_model_new(i: i32) -> SnakeModel {
         rotation_speed_in_degrees: 3.0,
         trace_counter: 0,
         trace: LinkedList::from([trace_item]),
-        tracing_step: 10.0
+        tracing_step: 10.0,
+        size: 5
     }
 }
 

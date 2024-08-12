@@ -97,7 +97,7 @@ fn snake_update (
             color_change += 1;
             gizmos.line_2d(current_pos, i.pos, color);
             current_pos = i.pos;
-            if total_distance > 300.0 {
+            if total_distance > (100 + snake.size * 20)as f32 {
                 last_trace_index_before_clean = i.index;
                 break;
             }

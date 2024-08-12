@@ -123,15 +123,20 @@ fn draw_food(
     mut score_query: Query<(&mut Text, &mut Score)>,
 ) {
     for mut food in &mut food_query {
-        if food_is_eaten_by_any_snake(&food, &mut snake_query) {
-            food.food_pos = new_food_position();
-            food.direction = new_food_direction();
-            food.color = new_food_color();
+        for mut snake in &mut snake_query {
+            if snake_eats_food(&snake, &food) {
+                food.food_pos = new_food_position();
+                food.direction = new_food_direction();
+                food.color = new_food_color();
 
-            for (mut text, mut score) in &mut score_query {
-                score.score_num += 1;
-                let score_string = score.score_num.to_string();
-                text.sections[0].value = format!("Score: {score_string}");
+                for (mut text, mut score) in &mut score_query {
+                    score.score_num += 1;
+                    let score_string = score.score_num.to_string();
+                    text.sections[0].value = format!("Score: {score_string}");
+                }
+
+                snake.size += 1;
+                break;
             }
         }
 
