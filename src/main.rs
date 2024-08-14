@@ -8,20 +8,23 @@ use bevy::{
     prelude::*,
     sprite::Wireframe2dPlugin,
 };
-use crate::grid::*;
 
 fn main() {
     App::new()
         .add_plugins((DefaultPlugins, Wireframe2dPlugin))
+        .add_plugins(crate::grid::GridPlugin)
         .add_plugins(crate::snake_extension::SnakePlugin)
         .add_plugins(crate::food::FoodPlugin)
         //.add_plugins(crate::sprite::SpritePlugin)
         .add_systems(Startup, setup)
-        .add_systems(Update, draw_grid)
         .run();
 }
 
-fn setup(mut commands: Commands) {
+fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
     commands.spawn(Camera2dBundle::default());
-
+    let sprite_handle = asset_server.load("Test.png");
+    commands.spawn(SpriteBundle {
+        texture: sprite_handle.clone(),
+        ..default()
+    });
 }

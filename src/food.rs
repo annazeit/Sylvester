@@ -31,7 +31,7 @@ impl Plugin for FoodPlugin {
         app.add_systems(Startup, food_start);
         app.add_systems(Startup, score_start);
         app.add_systems(Startup, bound_start);
-        app.add_systems(Update, draw_food);
+        app.add_systems(Update, food_update);
         app.add_systems(Update, draw_bound);
     }
 }
@@ -97,15 +97,6 @@ fn new_food_color() -> Srgba {
     color
 }
 
-fn food_is_eaten_by_any_snake(food: &Food, snake_query: &mut Query<&mut SnakeModel>) -> bool {
-    for snake in snake_query {
-        if snake_eats_food(&snake, food) {
-            return true;
-        }
-    }
-    return false;
-}
-
 fn snake_eats_food(
     snake: &SnakeModel,
     food: &Food
@@ -114,8 +105,30 @@ fn snake_eats_food(
     let distance_between = ((distance_vector.x * distance_vector.x) + (distance_vector.y * distance_vector.y)).sqrt();
     distance_between < food.radius + snake.head_radius
 }
+fn food_on_bound(mut food: Mut<Food>, bound_query: &Query<&mut Bound> ) {
+    for bound in bound_query {
+        let origin = Vec2::new(0.0, 0.0);
+        let distance_from_origin_to_food: f32 = {
+            let distance_vector = origin - food.food_pos;
+            ((distance_vector.x * distance_vector.x) + (distance_vector.y * distance_vector.y)).sqrt()
+        };
+        if distance_from_origin_to_food > (bound.radius - (food.radius * 2.0 )) {
+            food.direction = new_food_direction()
+        }
+    }
+}
 
-fn draw_food(
+fn draw_food(food: &mut Mut<Food>, gizmos: &mut Gizmos,) {
+    let food_move = {
+        let x = f32::sin(food.direction);
+        let y = f32::cos(food.direction);
+        Vec2::new(x, y)
+    };
+
+    food.food_pos += food_move;
+    gizmos.circle_2d(food.food_pos, food.radius, food.color);
+}
+fn food_update(
     mut gizmos: Gizmos,
     bound_query: Query<&mut Bound>,
     mut food_query: Query<&mut Food>,
@@ -134,30 +147,13 @@ fn draw_food(
                     let score_string = score.score_num.to_string();
                     text.sections[0].value = format!("Score: {score_string}");
                 }
-
                 snake.size += 1;
                 break;
             }
         }
 
-        let food_move = {
-            let x = f32::sin(food.direction);
-            let y = f32::cos(food.direction);
-            Vec2::new(x, y)
-        };
+        draw_food(&mut food, &mut gizmos);
 
-        food.food_pos += food_move;
-        gizmos.circle_2d(food.food_pos, food.radius, food.color);
-
-        for bound in &bound_query {
-            let origin = Vec2::new(0.0, 0.0);
-            let distance_from_origin_to_food: f32 = {
-                let distance_vector = origin - food.food_pos;
-                ((distance_vector.x * distance_vector.x) + (distance_vector.y * distance_vector.y)).sqrt()
-            };
-            if distance_from_origin_to_food > (bound.radius - (food.radius * 2.0 )) {
-                food.direction = new_food_direction()
-            }
-        }
+        food_on_bound(food, &bound_query);
     }
 }
