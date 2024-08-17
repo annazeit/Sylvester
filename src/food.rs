@@ -5,19 +5,20 @@ use bevy::math::Vec2;
 use bevy::prelude::*;
 use rand::Rng;
 use crate::snake_model::SnakeModel;
+use crate::grid::{VisualDiagnostic, draw_visual_diagnostics_info};
 
 pub struct FoodPlugin;
 
 #[derive(Component)]
 pub struct Food {
-    food_pos: Vec2,
+    pos: Vec2,
     direction: f32,
     radius: f32,
     color: Srgba,
 }
 #[derive(Component)]
 pub struct Bound {
-    bound_pos: Vec2,
+    pos: Vec2,
     radius: f32,
 }
 
@@ -38,7 +39,7 @@ impl Plugin for FoodPlugin {
 
 fn bound_start(mut commands: Commands) {
     commands.spawn(Bound{
-        bound_pos: Vec2::new(0.0, 0.0),
+        pos: Vec2::new(0.0, 0.0),
         radius: 500.0,
     });
 }
@@ -63,7 +64,7 @@ fn score_start(mut commands: Commands, asset_server: Res<AssetServer>) {
 }
 fn food_start (mut commands: Commands, asset_server: Res<AssetServer>) {
     let food_image_size = 100.0;
-    let radius = 20.0;
+    let radius = 10.0;
     let scale = (radius * 2.0) / food_image_size;
     for _ in 0..5 {
         commands.spawn((
@@ -73,9 +74,9 @@ fn food_start (mut commands: Commands, asset_server: Res<AssetServer>) {
                 ..default()
             },
             Food {
-                food_pos: new_food_position(),
+                pos: new_food_position(),
                 direction: new_food_direction(),
-                radius: radius,
+                radius,
                 color: new_food_color(),
             }
         ));
@@ -85,9 +86,12 @@ fn food_start (mut commands: Commands, asset_server: Res<AssetServer>) {
 fn draw_bound(
     mut gizmos: Gizmos,
     bound_query: Query<&mut Bound>,
+    query: Query<&VisualDiagnostic>
 ) {
     for bound in &bound_query{
-        gizmos.circle_2d(bound.bound_pos, bound.radius, RED);
+        if draw_visual_diagnostics_info(&query) {
+            gizmos.circle_2d(bound.pos, bound.radius, RED);
+        }
     }
 }
 
@@ -111,7 +115,7 @@ fn snake_eats_food(
     snake: &SnakeModel,
     food: &Food
 ) -> bool {
-    let distance_vector = snake.head_pos - food.food_pos;
+    let distance_vector = snake.head_pos - food.pos;
     let distance_between = ((distance_vector.x * distance_vector.x) + (distance_vector.y * distance_vector.y)).sqrt();
     distance_between < food.radius + snake.head_radius
 }
@@ -119,7 +123,7 @@ fn food_on_bound(food: &mut Food, bound_query: &Query<&mut Bound> ) {
     for bound in bound_query {
         let origin = Vec2::new(0.0, 0.0);
         let distance_from_origin_to_food: f32 = {
-            let distance_vector = origin - food.food_pos;
+            let distance_vector = origin - food.pos;
             ((distance_vector.x * distance_vector.x) + (distance_vector.y * distance_vector.y)).sqrt()
         };
         if distance_from_origin_to_food > (bound.radius - (food.radius * 2.0 )) {
@@ -128,28 +132,31 @@ fn food_on_bound(food: &mut Food, bound_query: &Query<&mut Bound> ) {
     }
 }
 
-fn draw_food(food: &mut Food, gizmos: &mut Gizmos) {
+fn draw_food(food: &mut Food, gizmos: &mut Gizmos, query: &Query<&VisualDiagnostic>) {
     let food_move = {
         let x = f32::sin(food.direction);
         let y = f32::cos(food.direction);
         Vec2::new(x, y)
     };
-
-    food.food_pos += food_move;
-    gizmos.circle_2d(food.food_pos, food.radius, food.color);
+    food.pos += food_move;
+    
+    if draw_visual_diagnostics_info(&query) {
+        gizmos.circle_2d(food.pos, food.radius, food.color);
+    }
 }
 fn food_update(
     mut gizmos: Gizmos,
     bound_query: Query<&mut Bound>,
     mut food_query: Query<(&mut Food, &mut Transform)>,
     mut snake_query: Query<&mut SnakeModel>,
-    mut score_query: Query<(&mut Text, &mut Score)>
+    mut score_query: Query<(&mut Text, &mut Score)>,
+    query: Query<&VisualDiagnostic>
 
 ) {
     for (mut food, mut transform) in &mut food_query {
         for mut snake in &mut snake_query {
             if snake_eats_food(&snake, &food) {
-                food.food_pos = new_food_position();
+                food.pos = new_food_position();
                 food.direction = new_food_direction();
                 food.color = new_food_color();
 
@@ -163,10 +170,10 @@ fn food_update(
             }
         }
 
-        draw_food(&mut food, &mut gizmos);
+        draw_food(&mut food, &mut gizmos, &query);
 
         food_on_bound(&mut food, &bound_query);
 
-        transform.translation = Vec3::new(food.food_pos.x, food.food_pos.y, 0.0);
+        transform.translation = Vec3::new(food.pos.x, food.pos.y, 0.0);
     }
 }

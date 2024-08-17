@@ -7,15 +7,15 @@ use std::f32;
 use bevy::app::{App, Plugin};
 use bevy::color::palettes::css::GREY;
 
-pub struct GridPlugin;
+pub struct VisualDiagnosticPlugin;
 
 #[derive(Component)]
-pub struct Grid {
+pub struct VisualDiagnostic {
     enabled: bool,
     cell_size: f32,
 }
 
-impl Plugin for GridPlugin{
+impl Plugin for VisualDiagnosticPlugin{
     fn build (&self, app: &mut App) {
         app.add_systems(Startup, grid_start);
         app.add_systems(Update, draw_grid);
@@ -23,15 +23,27 @@ impl Plugin for GridPlugin{
 }
 
 fn grid_start (mut commands: Commands) {
-    commands.spawn(Grid{
+    commands.spawn(VisualDiagnostic{
         enabled: false,
         cell_size: 50.0
     });
 }
 
+/// Visual diagnostics enabled when we need to draw extra entity shapes using gizmos to help to debug game.
+/// Without visual diagnostics gizmos will not be used and we will see only SpriteBundles.
+/// Drawing gizmos with SpriteBundles together helps to test the game.
+pub fn draw_visual_diagnostics_info(query: &Query<&VisualDiagnostic>) -> bool {
+    for item in query {
+        if item.enabled { 
+            return true;
+        }
+    }
+    return false;
+}
+
 fn draw_grid(
     mut gizmos: Gizmos,
-    mut grid_query: Query<&mut Grid>,
+    mut grid_query: Query<&mut VisualDiagnostic>,
     keyboard_input: Res<ButtonInput<KeyCode>>
 ){
     for mut grid in &mut grid_query {
