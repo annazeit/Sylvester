@@ -61,14 +61,24 @@ fn score_start(mut commands: Commands, asset_server: Res<AssetServer>) {
         Score { score_num: 0 }
     ));
 }
-fn food_start (mut commands: Commands) {
+fn food_start (mut commands: Commands, asset_server: Res<AssetServer>) {
+    let food_image_size = 100.0;
+    let radius = 20.0;
+    let scale = (radius * 2.0) / food_image_size;
     for _ in 0..5 {
-        commands.spawn(Food {
-            food_pos: new_food_position(),
-            direction: new_food_direction(),
-            radius: 10.0,
-            color: new_food_color(),
-        });
+        commands.spawn((
+            SpriteBundle {
+                texture: asset_server.load("Test.png"),
+                transform: Transform::from_xyz(120.0, 0.0, 0.0).with_scale(Vec3::new(scale, scale, scale)),
+                ..default()
+            },
+            Food {
+                food_pos: new_food_position(),
+                direction: new_food_direction(),
+                radius: radius,
+                color: new_food_color(),
+            }
+        ));
     }
 }
 
@@ -105,7 +115,7 @@ fn snake_eats_food(
     let distance_between = ((distance_vector.x * distance_vector.x) + (distance_vector.y * distance_vector.y)).sqrt();
     distance_between < food.radius + snake.head_radius
 }
-fn food_on_bound(mut food: Mut<Food>, bound_query: &Query<&mut Bound> ) {
+fn food_on_bound(food: &mut Food, bound_query: &Query<&mut Bound> ) {
     for bound in bound_query {
         let origin = Vec2::new(0.0, 0.0);
         let distance_from_origin_to_food: f32 = {
@@ -118,7 +128,7 @@ fn food_on_bound(mut food: Mut<Food>, bound_query: &Query<&mut Bound> ) {
     }
 }
 
-fn draw_food(food: &mut Mut<Food>, gizmos: &mut Gizmos,) {
+fn draw_food(food: &mut Food, gizmos: &mut Gizmos) {
     let food_move = {
         let x = f32::sin(food.direction);
         let y = f32::cos(food.direction);
@@ -131,11 +141,12 @@ fn draw_food(food: &mut Mut<Food>, gizmos: &mut Gizmos,) {
 fn food_update(
     mut gizmos: Gizmos,
     bound_query: Query<&mut Bound>,
-    mut food_query: Query<&mut Food>,
+    mut food_query: Query<(&mut Food, &mut Transform)>,
     mut snake_query: Query<&mut SnakeModel>,
-    mut score_query: Query<(&mut Text, &mut Score)>,
+    mut score_query: Query<(&mut Text, &mut Score)>
+
 ) {
-    for mut food in &mut food_query {
+    for (mut food, mut transform) in &mut food_query {
         for mut snake in &mut snake_query {
             if snake_eats_food(&snake, &food) {
                 food.food_pos = new_food_position();
@@ -154,6 +165,8 @@ fn food_update(
 
         draw_food(&mut food, &mut gizmos);
 
-        food_on_bound(food, &bound_query);
+        food_on_bound(&mut food, &bound_query);
+
+        transform.translation = Vec3::new(food.food_pos.x, food.food_pos.y, 0.0);
     }
 }

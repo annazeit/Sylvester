@@ -15,7 +15,7 @@ fn main() {
         .add_plugins(crate::grid::GridPlugin)
         .add_plugins(crate::snake_extension::SnakePlugin)
         .add_plugins(crate::food::FoodPlugin)
-        //.add_plugins(crate::sprite::SpritePlugin)
+        .add_plugins(crate::sprite::SpritePlugin)
         .add_systems(Startup, setup)
         .run();
 }

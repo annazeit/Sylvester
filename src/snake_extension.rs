@@ -68,23 +68,8 @@ fn snake_update (
     for mut snake in &mut snake_query {
         snake.head_direction_angle += keyboard_rotation(&keyboard_input, &snake, &time) * (snake.movement_speed / 4.0);
 
-        let head_move: SnakeModelUpdate = {
-            let keyboard_up_down_input = keyboard_movement_up_down_impure(&keyboard_input);
-            head_move_pure(keyboard_up_down_input, time.delta_seconds(), &snake)
-        };
-
-        snake.head_pos += head_move.new_head_pos;
-        match head_move.trace_point_to_add {
-            Some(point) => {
-                snake.trace_counter += 1;
-                let trace_item = TraceItem {
-                    pos: point,
-                    index: snake.trace_counter
-                };
-                snake.trace.push_front(trace_item);
-            },
-            None => (),
-        }
+        let keyboard_up_down_input = keyboard_movement_up_down_impure(&keyboard_input);
+        head_move_pure(keyboard_up_down_input, time.delta_seconds(), &mut snake);
         let mut current_pos = snake.head_pos;
         let mut total_distance = 0.0;
 
