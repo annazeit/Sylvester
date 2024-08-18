@@ -6,10 +6,9 @@ use bevy::prelude::{Commands, Gizmos, KeyCode, Query, Res};
 use bevy::prelude::Time;
 use std::f32::*;
 use bevy::prelude::Color;
-use crate::grid::{self, VisualDiagnostic};
-use crate::grid::draw_visual_diagnostics_info;
-use crate::snake_model::*;
 
+use crate::grid::*;
+use crate::snake_model::*;
 
 pub struct SnakePlugin;
 

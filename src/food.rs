@@ -4,8 +4,9 @@ use bevy::color::{Color, Srgba};
 use bevy::math::Vec2;
 use bevy::prelude::*;
 use rand::Rng;
+
 use crate::snake_model::SnakeModel;
-use crate::grid::{VisualDiagnostic, draw_visual_diagnostics_info};
+use crate::grid::*;
 
 pub struct FoodPlugin;
 

@@ -3,6 +3,7 @@ mod sprite;
 mod snake_extension;
 mod snake_model;
 mod food;
+mod snake_model_tests;
 
 use bevy::{
     prelude::*,
