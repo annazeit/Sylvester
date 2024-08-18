@@ -9,6 +9,7 @@ use bevy::prelude::Color;
 
 use crate::grid::*;
 use crate::snake_model::*;
+use crate::trace_position_calculator::calculate_node_pos_traced_on_distance_from_head;
 
 pub struct SnakePlugin;
 
@@ -100,10 +101,24 @@ fn snake_update (
 
         clear_extra_traces(&mut snake.trace, last_trace_index_before_clean);
 
-        println!("Trace list length: {:?}", snake.trace.len());
-
         draw_node(&mut gizmos, snake.head_pos, snake.head_radius, &query);
 
         draw_tail(&mut gizmos, snake.head_radius, &snake, &query);
+
+        let mut trace_positions_iterator = snake.trace.iter().map(|p| p.pos);
+        
+        println!("!!!Head position: {:?}", snake.head_pos.to_string());
+        for (index, item) in snake.trace.iter().enumerate() {
+            println!("{:?}: x={:?}, y={:?}", index, item.pos.x, item.pos.y);
+        }
+        println!("!!!Printing trace: {:?}", snake.trace.len());
+        for i in 0..20 {
+            let distance_from_head = i as f32 * 30.0;
+            let node_pos = calculate_node_pos_traced_on_distance_from_head(snake.head_pos, &mut trace_positions_iterator, snake.trace.len(), distance_from_head);
+            println!("{:?}: x={:?}, y={:?}", i, node_pos.x, node_pos.y);
+            gizmos.circle_2d(node_pos, 10.0, GREEN);
+        }
+        
+        ()
     }
 }
