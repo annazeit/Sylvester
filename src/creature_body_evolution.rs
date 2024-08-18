@@ -1,22 +1,22 @@
 use bevy::prelude::Entity;
 
-use crate::snake_model::{SnakeSpireNode, SnakeSpireNodeType};
+use crate::snake_model::{SnakeSpineNode, SnakeSpireNodeType};
 
 type SpawnSnakeSpineNode = fn() -> Entity;
 
-fn spine_from_size(size: i32, mut spawn: SpawnSnakeSpineNode) -> Vec<SnakeSpireNode> {
+fn spine_from_size(size: i32, mut spawn: SpawnSnakeSpineNode) -> Vec<SnakeSpineNode> {
     if size > 20 { 
         let big_entity = spawn();
         return vec! [ 
-            SnakeSpireNode {
+            SnakeSpineNode {
                 distance_from_head: 0.0,
                 node_type: SnakeSpireNodeType::Big(big_entity)
             },
-            SnakeSpireNode {
+            SnakeSpineNode {
                 distance_from_head: 50.0,
                 node_type: SnakeSpireNodeType::Medium,
             },
-            SnakeSpireNode {
+            SnakeSpineNode {
                 distance_from_head: 70.0,
                 node_type: SnakeSpireNodeType::Small 
             }
@@ -26,11 +26,11 @@ fn spine_from_size(size: i32, mut spawn: SpawnSnakeSpineNode) -> Vec<SnakeSpireN
     // if size > 10 { return vec! [ SnakeSpireNodeType::Small, SnakeSpireNodeType::Small, SnakeSpireNodeType::Small ]; }
     // if size > 5 { return vec! [ SnakeSpireNodeType::Medium, SnakeSpireNodeType::Small ]; }
     return vec! [ 
-        SnakeSpireNode {
+        SnakeSpineNode {
             distance_from_head: 0.0,
             node_type: SnakeSpireNodeType::Small 
         },
-        SnakeSpireNode {
+        SnakeSpineNode {
             distance_from_head: 10.0,
             node_type: SnakeSpireNodeType::Small 
         }

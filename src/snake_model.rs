@@ -18,13 +18,13 @@ pub enum SnakeSpireNodeType {
     Small,
 }
 
-pub struct SnakeSpireNode{
+pub struct SnakeSpineNode{
     pub distance_from_head: f32,
     pub node_type: SnakeSpireNodeType
 }
 
 pub enum BodyType {
-    Snake(Vec<SnakeSpireNode>),
+    Snake(Vec<SnakeSpineNode>),
     JellyFish
 }
 
