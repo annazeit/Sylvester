@@ -28,14 +28,11 @@ pub enum BodyType {
     JellyFish
 }
 
-fn spine_from_size(size: i32, mut commands: Commands, asset_server: Res<AssetServer>) -> Vec<SnakeSpireNodeType> {
+type SpawnSnakeSpineNode = fn() -> Entity;
+
+fn spine_from_size(size: i32, mut spawn: SpawnSnakeSpineNode) -> Vec<SnakeSpireNodeType> {
     if size > 20 { 
-        let sprite_handle = asset_server.load("Test.png");
-        let head_sprite_bundle = SpriteBundle {
-            texture: sprite_handle.clone(),
-            ..default()
-        };
-        let big_entity = commands.spawn(head_sprite_bundle).id();
+        let big_entity = spawn();
         return vec! [ 
             SnakeSpireNodeType::Big(big_entity),
             SnakeSpireNodeType::Medium, 
