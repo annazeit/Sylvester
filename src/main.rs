@@ -4,6 +4,7 @@ mod snake_extension;
 mod snake_model;
 mod food;
 mod snake_model_tests;
+mod creature_body_evolution;
 
 use bevy::{
     prelude::*,

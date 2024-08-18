@@ -19,38 +19,13 @@ pub enum SnakeSpireNodeType {
 }
 
 pub struct SnakeSpireNode{
-    distance_from_head: f32,
-    node_type: SnakeSpireNodeType
+    pub distance_from_head: f32,
+    pub node_type: SnakeSpireNodeType
 }
 
 pub enum BodyType {
     Snake(Vec<SnakeSpireNode>),
     JellyFish
-}
-
-type SpawnSnakeSpineNode = fn() -> Entity;
-
-fn spine_from_size(size: i32, mut spawn: SpawnSnakeSpineNode) -> Vec<SnakeSpireNodeType> {
-    if size > 20 { 
-        let big_entity = spawn();
-        return vec! [ 
-            SnakeSpireNodeType::Big(big_entity),
-            SnakeSpireNodeType::Medium, 
-            SnakeSpireNodeType::Small 
-        ]; 
-    }
-    if size > 10 { return vec! [ SnakeSpireNodeType::Medium, SnakeSpireNodeType::Small, SnakeSpireNodeType::Small ]; }
-    if size > 10 { return vec! [ SnakeSpireNodeType::Small, SnakeSpireNodeType::Small, SnakeSpireNodeType::Small ]; }
-    if size > 5 { return vec! [ SnakeSpireNodeType::Medium, SnakeSpireNodeType::Small ]; }
-    return vec! [ SnakeSpireNodeType::Small, SnakeSpireNodeType::Small ] ;
-}
-
-fn node_radius(node: SnakeSpireNodeType) -> f32 {
-    match node {
-        SnakeSpireNodeType::Small => { 10.0 }
-        SnakeSpireNodeType::Medium => { 15.0 }
-        SnakeSpireNodeType::Big(_) => { 20.0 }
-    }
 }
 
 #[derive(Component)]
