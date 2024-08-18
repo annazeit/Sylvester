@@ -1,5 +1,7 @@
+use bevy::asset::AssetServer;
 use bevy::math::Vec2;
-use bevy::prelude::{Component};
+use bevy::prelude::{default, Commands, Component, Entity, Res};
+use bevy::sprite::SpriteBundle;
 use std::collections::LinkedList;
 
 #[derive(PartialEq)]
@@ -10,25 +12,47 @@ pub struct TraceItem {
     pub index: i64,
 }
 
-pub enum Node {
-    Big,
+pub enum SnakeSpireNodeType {
+    Big(Entity),
     Medium,
     Small,
 }
 
-fn spine_from_size(size: i32) -> Vec<Node> {
-    if size > 20 { return vec! [ Node::Big, Node::Medium, Node::Small ]; }
-    if size > 10 { return vec! [ Node::Medium, Node::Small, Node::Small ]; }
-    if size > 10 { return vec! [ Node::Small, Node::Small, Node::Small ]; }
-    if size > 5 { return vec! [ Node::Medium, Node::Small ]; }
-    return vec! [ Node::Small, Node::Small ] ;
+pub struct SnakeSpireNode{
+    distance_from_head: f32,
+    node_type: SnakeSpireNodeType
 }
 
-fn node_radius(node: Node) -> f32 {
+pub enum BodyType {
+    Snake(Vec<SnakeSpireNode>),
+    JellyFish
+}
+
+fn spine_from_size(size: i32, mut commands: Commands, asset_server: Res<AssetServer>) -> Vec<SnakeSpireNodeType> {
+    if size > 20 { 
+        let sprite_handle = asset_server.load("Test.png");
+        let head_sprite_bundle = SpriteBundle {
+            texture: sprite_handle.clone(),
+            ..default()
+        };
+        let big_entity = commands.spawn(head_sprite_bundle).id();
+        return vec! [ 
+            SnakeSpireNodeType::Big(big_entity),
+            SnakeSpireNodeType::Medium, 
+            SnakeSpireNodeType::Small 
+        ]; 
+    }
+    if size > 10 { return vec! [ SnakeSpireNodeType::Medium, SnakeSpireNodeType::Small, SnakeSpireNodeType::Small ]; }
+    if size > 10 { return vec! [ SnakeSpireNodeType::Small, SnakeSpireNodeType::Small, SnakeSpireNodeType::Small ]; }
+    if size > 5 { return vec! [ SnakeSpireNodeType::Medium, SnakeSpireNodeType::Small ]; }
+    return vec! [ SnakeSpireNodeType::Small, SnakeSpireNodeType::Small ] ;
+}
+
+fn node_radius(node: SnakeSpireNodeType) -> f32 {
     match node {
-        Node::Small => { 10.0 }
-        Node::Medium => { 15.0 }
-        Node::Big => { 20.0 }
+        SnakeSpireNodeType::Small => { 10.0 }
+        SnakeSpireNodeType::Medium => { 15.0 }
+        SnakeSpireNodeType::Big(_) => { 20.0 }
     }
 }
 
@@ -47,6 +71,7 @@ pub struct SnakeModel {
     pub tracing_step: f32,
     // number of foods eaten by snake
     pub size: i32, 
+    pub body: BodyType
 }
 
 pub enum  SnakeMoveDirection {
@@ -70,7 +95,8 @@ fn snake_model_new(i: i32) -> SnakeModel {
         trace_counter: 0,
         trace: LinkedList::from([trace_item]),
         tracing_step: 10.0,
-        size: 5
+        size: 5,
+        body: BodyType::Snake(vec![])
     }
 }
 
