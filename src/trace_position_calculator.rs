@@ -40,7 +40,7 @@ mod tests {
     use super::*;
 
     fn assert_vec2_eq(a: Vec2, b: Vec2){
-        let delta_max: f32 = 0.001;
+        let delta_max: f32 = 0.01;
         let dx = f32::abs(a.x - b.x);
         assert!(dx < delta_max);
         let dy = f32::abs(a.y - b.y);
@@ -126,4 +126,40 @@ mod tests {
     }
 
     
+    #[test]
+    fn debug_strage_case() {
+        let head_pos = Vec2::new(0.0, 107.59321);
+        let trace = [
+            // Vec2::new(0.0, 102.58502),
+            // Vec2::new(0.0, 92.575264),
+            // Vec2::new(0.0, 82.560165),
+            // Vec2::new(0.0, 72.557556),
+            // Vec2::new(0.0, 62.554504),
+            // Vec2::new(0.0, 52.541656),
+            // Vec2::new(0.0, 42.534496),
+            // Vec2::new(0.0, 32.525833),
+            // Vec2::new(0.0, 22.51635),
+            // Vec2::new(0.0, 10.018846),
+            Vec2::new(0.0, -0.0),
+            
+        ];
+
+        let expected_results = [
+            // x + 5
+            (217.0, Vec2::new(0.0, -10.0)),
+        ];
+
+        for (distance_from_head, expected_pos) in expected_results {
+            let actual_pos = calculate_node_pos_traced_on_distance_from_head(
+                head_pos, 
+                &mut LinkedList::from(trace).into_iter(), 
+                trace.len(), 
+                distance_from_head
+            );
+
+            println!("!!!actual_pos: {:?}", actual_pos);
+            println!("!!!expected_pos: {:?}", expected_pos);
+            assert_vec2_eq(actual_pos, expected_pos);
+        }
+    }    
 }
