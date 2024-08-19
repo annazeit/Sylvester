@@ -157,8 +157,8 @@ fn food_update(
     for (mut food, mut transform) in &mut food_query {
         for mut snake in &mut snake_query {
             if snake_eats_food(&snake, &food) {
-                food.pos = new_food_position();
                 food.direction = new_food_direction();
+                food.pos = new_food_position();
                 food.color = new_food_color();
 
                 for (mut text, mut score) in &mut score_query {
