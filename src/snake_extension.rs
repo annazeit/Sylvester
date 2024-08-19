@@ -84,13 +84,13 @@ fn get_last_trace_index_before_clean(snake: &SnakeModel, gizmos: &mut Gizmos) ->
     return last_trace_index_before_clean;
 }
 
-fn draw_node(mut snake: &Mut<SnakeModel>, gizmos: &mut Gizmos,) {
+fn draw_node(snake: &SnakeModel, gizmos: &mut Gizmos,) {
     for i in 0..20 {
         let distance_from_head = i as f32 * 10.0;
         let mut trace_positions_iterator = snake.trace.iter().map(|p| p.pos);
         let node_pos = calculate_node_pos_traced_on_distance_from_head(snake.head_pos, &mut trace_positions_iterator, snake.trace.len(), distance_from_head);
         gizmos.circle_2d(node_pos, 10.0, GREEN);
-    }   
+    }
 }
 
 fn snake_update (
