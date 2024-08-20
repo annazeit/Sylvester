@@ -166,7 +166,7 @@ fn food_update(
                     let score_string = score.score_num.to_string();
                     text.sections[0].value = format!("Score: {score_string}");
                 }
-                snake.size += 1;
+                snake.size += 1.0;
                 break;
             }
         }

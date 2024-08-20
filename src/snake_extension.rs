@@ -9,7 +9,7 @@ use bevy::prelude::Color;
 
 use crate::grid::*;
 use crate::snake_model::*;
-use crate::trace_position_calculator::calculate_node_pos_traced_on_distance_from_head;
+use crate::trace_position_calculator::*;
 
 pub struct SnakePlugin;
 
@@ -66,16 +66,17 @@ fn get_last_trace_index_before_clean(snake: &SnakeModel, gizmos: &mut Gizmos) ->
     let mut current_pos = snake.head_pos;
     let mut total_distance = 0.0;
 
-    let steps = snake.tracing_step;
+    let step = snake.tracing_step;
     let mut color_change = 0;
     let mut last_trace_index_before_clean = 0;
     for i in snake.trace.iter() {
         total_distance += current_pos.distance(i.pos);
-        let color = Color::hsl(360.0 * color_change as f32 / steps as f32, 0.95, 0.7);
+        let color = Color::hsl(360.0 * color_change as f32 / step as f32, 0.95, 0.7);
         color_change += 1;
+
         gizmos.line_2d(current_pos, i.pos, color);
         current_pos = i.pos;
-        if total_distance > (100 + snake.size * 10)as f32 {
+        if total_distance > 20.0 + snake.size * snake.node_radius * 2.0 {
             last_trace_index_before_clean = i.index;
             break;
         }
@@ -83,12 +84,12 @@ fn get_last_trace_index_before_clean(snake: &SnakeModel, gizmos: &mut Gizmos) ->
     return last_trace_index_before_clean;
 }
 
-fn draw_node(snake: &SnakeModel, gizmos: &mut Gizmos,) {
-    for i in 0..snake.size {
+fn draw_nodes(snake: &mut SnakeModel, gizmos: &mut Gizmos,) {
+    for i in 0..(snake.size) as i32 {
         let distance_from_head = i as f32 * (snake.tracing_step * 2.0);
         let mut trace_positions_iterator = snake.trace.iter().map(|p| p.pos);
         let node_pos = calculate_node_pos_traced_on_distance_from_head(snake.head_pos, &mut trace_positions_iterator, snake.trace.len(), distance_from_head);
-        gizmos.circle_2d(node_pos, 10.0, GREEN);
+        gizmos.circle_2d(node_pos, snake.node_radius, WHITE);
     }
 }
 
@@ -112,6 +113,6 @@ fn snake_update (
 
         draw_tail(&mut gizmos, snake.head_radius, &snake, &query);
 
-        draw_node(&snake, &mut gizmos);
+        draw_nodes(&mut snake, &mut gizmos);
     }
 }

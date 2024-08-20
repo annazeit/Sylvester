@@ -41,8 +41,9 @@ pub struct SnakeModel {
     pub trace_counter: i64,
     pub trace: LinkedList<TraceItem>,
     pub tracing_step: f32,
-    // number of foods eaten by snake
-    pub size: i32, 
+    // NOT number of foods eaten by snake // number of nodes drawn
+    pub size: f32, 
+    pub node_radius: f32,
     pub body: BodyType
 }
 
@@ -67,7 +68,8 @@ pub fn snake_model_new(i: i32) -> SnakeModel {
         trace_counter: 0,
         trace: LinkedList::from([trace_item]),
         tracing_step: 10.0,
-        size: 5,
+        size: 5.0,
+        node_radius: 10.0,
         body: BodyType::Snake(vec![])
     }
 }
