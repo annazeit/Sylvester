@@ -1,6 +1,5 @@
 use bevy::prelude::Vec2;
 use std::collections::LinkedList;
-
 use crate::snake_model::*;
 
 #[cfg(test)]

@@ -4,7 +4,7 @@ use crate::snake_model::{SnakeSpineNode, SnakeSpireNodeType};
 
 type SpawnSnakeSpineNode = fn() -> Entity;
 
-fn spine_from_size(size: i32, mut spawn: SpawnSnakeSpineNode) -> Vec<SnakeSpineNode> {
+fn spine_from_size(size: i32, spawn: SpawnSnakeSpineNode) -> Vec<SnakeSpineNode> {
     if size > 20 { 
         let big_entity = spawn();
         return vec! [ 

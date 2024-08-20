@@ -6,7 +6,6 @@ use bevy::prelude::{Commands, Gizmos, KeyCode, Query, Res};
 use bevy::prelude::Time;
 use std::f32::*;
 use bevy::prelude::Color;
-use bevy::prelude::Mut;
 
 use crate::grid::*;
 use crate::snake_model::*;
@@ -49,7 +48,7 @@ fn draw_circle(gizmos: &mut Gizmos, position: Vec2, radius: f32, query: &Query<&
 
 fn draw_tail(gizmos: &mut Gizmos, radius: f32, snake: &SnakeModel, query: &Query<&VisualDiagnostic>){
     let mut distance = radius * 2.0;
-    for i in 1..3 {
+    for i in 1..=2 {
         let shift_from_head: Vec2 = {
             let x_tail = f32::sin(snake.head_direction_angle - consts::PI) * distance;
             let y_tail = f32::cos(snake.head_direction_angle - consts::PI) * distance;
@@ -67,7 +66,7 @@ fn get_last_trace_index_before_clean(snake: &SnakeModel, gizmos: &mut Gizmos) ->
     let mut current_pos = snake.head_pos;
     let mut total_distance = 0.0;
 
-    let steps = 30;
+    let steps = snake.tracing_step;
     let mut color_change = 0;
     let mut last_trace_index_before_clean = 0;
     for i in snake.trace.iter() {
@@ -76,7 +75,7 @@ fn get_last_trace_index_before_clean(snake: &SnakeModel, gizmos: &mut Gizmos) ->
         color_change += 1;
         gizmos.line_2d(current_pos, i.pos, color);
         current_pos = i.pos;
-        if total_distance > (100 + snake.size * 20)as f32 {
+        if total_distance > (100 + snake.size * 10)as f32 {
             last_trace_index_before_clean = i.index;
             break;
         }
@@ -85,8 +84,8 @@ fn get_last_trace_index_before_clean(snake: &SnakeModel, gizmos: &mut Gizmos) ->
 }
 
 fn draw_node(snake: &SnakeModel, gizmos: &mut Gizmos,) {
-    for i in 0..20 {
-        let distance_from_head = i as f32 * 10.0;
+    for i in 0..snake.size {
+        let distance_from_head = i as f32 * (snake.tracing_step * 2.0);
         let mut trace_positions_iterator = snake.trace.iter().map(|p| p.pos);
         let node_pos = calculate_node_pos_traced_on_distance_from_head(snake.head_pos, &mut trace_positions_iterator, snake.trace.len(), distance_from_head);
         gizmos.circle_2d(node_pos, 10.0, GREEN);
@@ -94,7 +93,7 @@ fn draw_node(snake: &SnakeModel, gizmos: &mut Gizmos,) {
 }
 
 fn snake_update (
-    mut gizmos: Gizmos,
+    mut gizmos: Gizmos, 
     mut snake_query: Query<&mut SnakeModel>,
     keyboard_input: Res<ButtonInput<KeyCode>>,
     time: Res<Time>,
@@ -107,10 +106,9 @@ fn snake_update (
         head_move_pure(keyboard_up_down_input, time.delta_seconds(), &mut snake);
         
         let last_trace_index_before_clean = get_last_trace_index_before_clean(&snake, &mut gizmos);
-
         clear_extra_traces(&mut snake.trace, last_trace_index_before_clean);
 
-        draw_circle(&mut gizmos, snake.head_pos, snake.head_radius, &query);
+        draw_circle(&mut gizmos, snake.head_pos, snake.head_radius, &query); // draws snake head
 
         draw_tail(&mut gizmos, snake.head_radius, &snake, &query);
 

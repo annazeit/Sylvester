@@ -130,14 +130,15 @@ mod tests {
     
     #[test]
     fn thirty_degree_test() {
-        let head_pos = Vec2::new(0.0, 0.0);
+        let head_pos = Vec2::new(10.0, 0.0);
         let trace = [
+            Vec2::new(0.0, 0.0),
             Vec2::new(17.32051, 10.0),
             
         ];
 
         let expected_results = [
-            (20.0, Vec2::new(17.32051, 10.0)),
+            (30.0, Vec2::new(17.32051, 10.0)),
         ];
 
         for (distance_from_head, expected_pos) in expected_results {
@@ -154,14 +155,15 @@ mod tests {
 
     #[test]
     fn one_hudred_ten_degree_test() {
-        let head_pos = Vec2::new(0.0, 0.0);
+        let head_pos = Vec2::new(10.0, 0.0);
         let trace = [
-            Vec2::new(-17.32051, 10.0),
+            Vec2::new(0.0, 0.0),
+            Vec2::new(10.0, -17.32051),
             
         ];
 
         let expected_results = [
-            (20.0, Vec2::new(-17.32051, 10.0)),
+            (30.0, Vec2::new(10.0, -17.32051)),
         ];
 
         for (distance_from_head, expected_pos) in expected_results {
@@ -227,7 +229,6 @@ mod tests {
         ];
 
         let expected_results = [
-            // x + 5
             (107.59321, Vec2::new(0.0, -0.0)),
         ];
 
