@@ -24,6 +24,7 @@ pub struct SnakeSpineNode{
 }
 
 pub enum BodyType {
+    BasicHeadOnly(Entity),
     Snake(Vec<SnakeSpineNode>),
     JellyFish
 }
@@ -31,6 +32,7 @@ pub enum BodyType {
 #[derive(Component)]
 pub struct SnakeModel {
     pub head_pos: Vec2,
+    // head direction angle in radians
     pub head_direction_angle: f32,
     pub head_radius: f32,//?
     // linear speed in meters per second
@@ -44,7 +46,8 @@ pub struct SnakeModel {
     // NOT number of foods eaten by snake // number of nodes drawn
     pub size: f32, 
     pub node_radius: f32,
-    pub body: BodyType
+
+    pub body: BodyType,
 }
 
 pub enum  SnakeMoveDirection {
@@ -70,8 +73,9 @@ pub fn snake_model_new(i: i32) -> SnakeModel {
         tracing_step: 10.0,
         size: 5.0,
         node_radius: 10.0,
-        body: BodyType::Snake(vec![])
+        body: BodyType::Snake(vec![]),
     }
+    
 }
 
 pub fn snake_head_new_list() -> Vec<SnakeModel> {

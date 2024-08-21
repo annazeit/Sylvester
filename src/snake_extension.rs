@@ -1,11 +1,13 @@
+use bevy::ecs::query;
+use bevy::prelude::*;
+use bevy::asset::AssetServer;
 use bevy::app::{App, Plugin, Startup, Update};
+use bevy::math::Vec2;
+use std::f32::*;
+
 use bevy::color::palettes::css::*;
 use bevy::input::ButtonInput;
-use bevy::math::Vec2;
-use bevy::prelude::{Commands, Gizmos, KeyCode, Query, Res};
-use bevy::prelude::Time;
-use std::f32::*;
-use bevy::prelude::Color;
+use bevy::sprite::SpriteBundle;
 
 use crate::grid::*;
 use crate::snake_model::*;
@@ -20,10 +22,25 @@ impl Plugin for SnakePlugin {
     }
 }
 
-fn snake_start (mut commands: Commands) {
-    for i in snake_head_new_list() {
-        commands.spawn(i);
-    }}
+/// All creature visual movable parts will have this component to query their transformations.  
+#[derive(Component)]
+struct  CreatureBodyVisualElement;
+
+fn snake_start (mut commands: Commands,  asset_server: Res<AssetServer>) {
+    for mut snake_model in snake_head_new_list() {
+        let head_entity = commands.spawn((
+            SpriteBundle {
+                texture: asset_server.load("SnakeHead.png"),
+                transform: Transform::from_xyz(0.0, 0.0, 0.0).with_scale(Vec3::new(1.0, 1.0, 1.0)),
+                ..default()
+            },
+            CreatureBodyVisualElement
+        )).id();
+
+        snake_model.body = BodyType::BasicHeadOnly(head_entity);
+        commands.spawn(snake_model);
+    }
+}
 
 fn keyboard_movement_up_down_impure(keyboard_input: &Res<ButtonInput<KeyCode>>) -> SnakeMoveDirection {
     if keyboard_input.pressed(KeyCode::ArrowUp) { SnakeMoveDirection::Forward }
@@ -98,7 +115,9 @@ fn snake_update (
     mut snake_query: Query<&mut SnakeModel>,
     keyboard_input: Res<ButtonInput<KeyCode>>,
     time: Res<Time>,
-    query: Query<&VisualDiagnostic>
+    query: Query<&VisualDiagnostic>,
+    mut query_visual_element: Query<&mut Transform, With<CreatureBodyVisualElement>>,
+    mut commands: Commands
 ) {
     for mut snake in &mut snake_query {
         snake.head_direction_angle += keyboard_rotation(&keyboard_input, &snake, &time) * (snake.movement_speed / 4.0);
@@ -114,5 +133,19 @@ fn snake_update (
         draw_tail(&mut gizmos, snake.head_radius, &snake, &query);
 
         draw_nodes(&mut snake, &mut gizmos);
+
+        match &snake.body {
+            BodyType::BasicHeadOnly(head_entity) => {
+                let mut t = query_visual_element.get_mut(*head_entity).unwrap();
+                t.translation = Vec3::new(snake.head_pos.x, snake.head_pos.y, 0.0);
+                t.rotation = Quat::from_rotation_z(-snake.head_direction_angle);
+            },
+            BodyType::Snake(_) => {
+
+            },
+            BodyType::JellyFish => {
+
+            }
+        };
     }
 }
