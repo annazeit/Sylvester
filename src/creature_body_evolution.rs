@@ -1,6 +1,6 @@
 use bevy::prelude::*;
 use bevy::{sprite::SpriteBundle};
-use crate::snake_model::{SnakeSpineNode, SnakeSpineNodeType as SnakeSpineNodeType};
+use crate::snake_model::{SnakeModel, SnakeSpineNode, SnakeSpineNodeType as SnakeSpineNodeType};
 
 type SpawnSnakeSpineNode = fn() -> Entity;
 
@@ -9,7 +9,7 @@ type SpawnSnakeSpineNode = fn() -> Entity;
 #[derive(Component)]
 pub struct CreatureBodyVisualElement;
 
-pub fn spine_from_size(mut commands: &mut Commands,  asset_server: &Res<AssetServer>) -> Vec<SnakeSpineNode> {
+pub fn spine_from_size(mut commands: &mut Commands,  asset_server: &Res<AssetServer>, mut snake: &mut SnakeModel) -> Vec<SnakeSpineNode> {
     // if size > 20 { 
     //     let big_entity = spawn();
     //     return vec! [ 
@@ -39,17 +39,8 @@ pub fn spine_from_size(mut commands: &mut Commands,  asset_server: &Res<AssetSer
 
     let head_entity = commands.spawn((
         SpriteBundle {
-            texture: asset_server.load("Test.png"),
-            transform: Transform::from_xyz(0.0, 0.0, 0.0).with_scale(Vec3::new(0.5, 0.5, 0.5)),
-            ..default()
-        },
-        CreatureBodyVisualElement
-    )).id();
-
-    let node_entity = commands.spawn((
-        SpriteBundle {
-            texture: asset_server.load("SpinePart.png"),
-            transform: Transform::from_xyz(0.0, 0.0, 0.0).with_scale(Vec3::new(0.2, 0.2, 0.2)),
+            texture: asset_server.load("SpineHead.png"),
+            transform: Transform::from_xyz(0.0, 0.0, 0.0).with_scale(Vec3::new(0.1,0.1, 0.1)),
             ..default()
         },
         CreatureBodyVisualElement
@@ -60,11 +51,23 @@ pub fn spine_from_size(mut commands: &mut Commands,  asset_server: &Res<AssetSer
         distance_from_head: 0.0,
         node_type: head_entity,
     });
+
+    for i in 0..100 {
+    let node_entity = commands.spawn((
+        SpriteBundle {
+            texture: asset_server.load("SpinePart.png"),
+            transform: Transform::from_xyz(0.0, 0.0, 0.0).with_scale(Vec3::new(0.2, 0.2, 0.0)),
+            ..default()
+        },
+        CreatureBodyVisualElement
+    )).id();
+
     list.push(SnakeSpineNode {
         distance_from_head: 50.0,
         node_type: node_entity,
     });
-
+    }
+    
     return list;
 }
 

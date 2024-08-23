@@ -25,9 +25,5 @@ fn main() {
 
 fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
     commands.spawn(Camera2dBundle::default());
-    let sprite_handle = asset_server.load("Test.png");
-    commands.spawn(SpriteBundle {
-        texture: sprite_handle.clone(),
-        ..default()
-    });
+    
 }

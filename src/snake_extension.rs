@@ -26,7 +26,7 @@ impl Plugin for SnakePlugin {
 
 fn snake_start (mut commands: Commands,  asset_server: Res<AssetServer>) {
     for mut snake in snake_head_new_list() {
-        let list = spine_from_size(&mut commands, &asset_server);
+        let list = spine_from_size(&mut commands, &asset_server, &mut snake);
         snake.body = list;
         commands.spawn(snake);
     }
@@ -92,12 +92,19 @@ fn get_last_trace_index_before_clean(snake: &SnakeModel, gizmos: &mut Gizmos) ->
 }
 
 fn draw_nodes(snake: &mut SnakeModel, gizmos: &mut Gizmos, mut query_visual_element: &mut Query<&mut Transform, With<CreatureBodyVisualElement>>) {
-    for i in 0..(snake.size) as i32 {
+    for i in 0..=(snake.size) as i32 {
         let distance_from_head = i as f32 * (snake.tracing_step * 2.0);
         let mut trace_positions_iterator = snake.trace.iter().map(|p| p.pos);
         let node_pos = calculate_node_pos_traced_on_distance_from_head(snake.head_pos, &mut trace_positions_iterator, snake.trace.len(), distance_from_head);
         gizmos.circle_2d(node_pos, snake.node_radius, BLUE);
         
+
+        let snake_node = {
+            let mut node: Mut<Transform> = query_visual_element.get_mut(snake.body[i as usize].node_type).unwrap();
+            //let node_pos = calculate_node_pos_traced_on_distance_from_head(snake.head_pos, &mut snake.trace.iter().map(|p| p.pos), snake.trace.len(), snake.body[1].distance_from_head);
+            node.translation = Vec3::new(node_pos.x, node_pos.y, 0.0); 
+            node.rotation = Quat::from_rotation_z(-snake.head_direction_angle);
+        };
     }
 }
 
@@ -128,11 +135,5 @@ fn snake_update (
             let mut head: Mut<Transform> = query_visual_element.get_mut(snake.body[0].node_type).unwrap();
             head.translation = Vec3::new(snake.head_pos.x, snake.head_pos.y, 0.0); 
         };  
-        let snake_node = {
-            let mut node: Mut<Transform> = query_visual_element.get_mut(snake.body[1].node_type).unwrap();
-            let node_pos = calculate_node_pos_traced_on_distance_from_head(snake.head_pos, &mut snake.trace.iter().map(|p| p.pos), snake.trace.len(), snake.body[1].distance_from_head);
-            node.translation = Vec3::new(node_pos.x, node_pos.y, 0.0); 
-            node.rotation = Quat::from_rotation_z(-snake.head_direction_angle);
-        };
     }
 } 
