@@ -12,19 +12,20 @@ pub struct TraceItem {
     pub index: i64,
 }
 
-pub enum SnakeSpireNodeType {
-    Big(Entity),
+pub enum SnakeSpineNodeType {
+    Big,
     Medium,
     Small,
 }
 
 pub struct SnakeSpineNode{
     pub distance_from_head: f32,
-    pub node_type: SnakeSpireNodeType
+    pub node_type: Entity
 }
 
 pub enum BodyType {
     BasicHeadOnly(Entity),
+    BasicNodeOnly(Entity),
     Snake(Vec<SnakeSpineNode>),
     JellyFish
 }
@@ -47,7 +48,7 @@ pub struct SnakeModel {
     pub size: f32, 
     pub node_radius: f32,
 
-    pub body: BodyType,
+    pub body: Vec<SnakeSpineNode>,
 }
 
 pub enum  SnakeMoveDirection {
@@ -73,7 +74,7 @@ pub fn snake_model_new(i: i32) -> SnakeModel {
         tracing_step: 10.0,
         size: 5.0,
         node_radius: 10.0,
-        body: BodyType::Snake(vec![]),
+        body: vec![],
     }
     
 }

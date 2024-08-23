@@ -1,4 +1,3 @@
-use bevy::ecs::query;
 use bevy::prelude::*;
 use bevy::asset::AssetServer;
 use bevy::app::{App, Plugin, Startup, Update};
@@ -9,9 +8,11 @@ use bevy::color::palettes::css::*;
 use bevy::input::ButtonInput;
 use bevy::sprite::SpriteBundle;
 
+use crate::creature_body_evolution::*;
 use crate::grid::*;
 use crate::snake_model::*;
 use crate::trace_position_calculator::*;
+use crate::snake_model::*;
 
 pub struct SnakePlugin;
 
@@ -22,23 +23,12 @@ impl Plugin for SnakePlugin {
     }
 }
 
-/// All creature visual movable parts will have this component to query their transformations.  
-#[derive(Component)]
-struct  CreatureBodyVisualElement;
 
 fn snake_start (mut commands: Commands,  asset_server: Res<AssetServer>) {
-    for mut snake_model in snake_head_new_list() {
-        let head_entity = commands.spawn((
-            SpriteBundle {
-                texture: asset_server.load("SnakeHead.png"),
-                transform: Transform::from_xyz(0.0, 0.0, 0.0).with_scale(Vec3::new(1.0, 1.0, 1.0)),
-                ..default()
-            },
-            CreatureBodyVisualElement
-        )).id();
-
-        snake_model.body = BodyType::BasicHeadOnly(head_entity);
-        commands.spawn(snake_model);
+    for mut snake in snake_head_new_list() {
+        let list = spine_from_size(&mut commands, &asset_server);
+        snake.body = list;
+        commands.spawn(snake);
     }
 }
 
@@ -101,12 +91,13 @@ fn get_last_trace_index_before_clean(snake: &SnakeModel, gizmos: &mut Gizmos) ->
     return last_trace_index_before_clean;
 }
 
-fn draw_nodes(snake: &mut SnakeModel, gizmos: &mut Gizmos,) {
+fn draw_nodes(snake: &mut SnakeModel, gizmos: &mut Gizmos, mut query_visual_element: &mut Query<&mut Transform, With<CreatureBodyVisualElement>>) {
     for i in 0..(snake.size) as i32 {
         let distance_from_head = i as f32 * (snake.tracing_step * 2.0);
         let mut trace_positions_iterator = snake.trace.iter().map(|p| p.pos);
         let node_pos = calculate_node_pos_traced_on_distance_from_head(snake.head_pos, &mut trace_positions_iterator, snake.trace.len(), distance_from_head);
-        gizmos.circle_2d(node_pos, snake.node_radius, WHITE);
+        gizmos.circle_2d(node_pos, snake.node_radius, BLUE);
+        
     }
 }
 
@@ -117,7 +108,6 @@ fn snake_update (
     time: Res<Time>,
     query: Query<&VisualDiagnostic>,
     mut query_visual_element: Query<&mut Transform, With<CreatureBodyVisualElement>>,
-    mut commands: Commands
 ) {
     for mut snake in &mut snake_query {
         snake.head_direction_angle += keyboard_rotation(&keyboard_input, &snake, &time) * (snake.movement_speed / 4.0);
@@ -128,24 +118,21 @@ fn snake_update (
         let last_trace_index_before_clean = get_last_trace_index_before_clean(&snake, &mut gizmos);
         clear_extra_traces(&mut snake.trace, last_trace_index_before_clean);
 
-        draw_circle(&mut gizmos, snake.head_pos, snake.head_radius, &query); // draws snake head
+        draw_circle(&mut gizmos, snake.head_pos, snake.head_radius, &query); // draws hidden snake head in gizmos
 
         draw_tail(&mut gizmos, snake.head_radius, &snake, &query);
 
-        draw_nodes(&mut snake, &mut gizmos);
+        draw_nodes(&mut snake, &mut gizmos, &mut query_visual_element);
 
-        match &snake.body {
-            BodyType::BasicHeadOnly(head_entity) => {
-                let mut t = query_visual_element.get_mut(*head_entity).unwrap();
-                t.translation = Vec3::new(snake.head_pos.x, snake.head_pos.y, 0.0);
-                t.rotation = Quat::from_rotation_z(-snake.head_direction_angle);
-            },
-            BodyType::Snake(_) => {
-
-            },
-            BodyType::JellyFish => {
-
-            }
+        let snake_head = {
+            let mut head: Mut<Transform> = query_visual_element.get_mut(snake.body[0].node_type).unwrap();
+            head.translation = Vec3::new(snake.head_pos.x, snake.head_pos.y, 0.0); 
+        };  
+        let snake_node = {
+            let mut node: Mut<Transform> = query_visual_element.get_mut(snake.body[1].node_type).unwrap();
+            let node_pos = calculate_node_pos_traced_on_distance_from_head(snake.head_pos, &mut snake.trace.iter().map(|p| p.pos), snake.trace.len(), snake.body[1].distance_from_head);
+            node.translation = Vec3::new(node_pos.x, node_pos.y, 0.0); 
+            node.rotation = Quat::from_rotation_z(-snake.head_direction_angle);
         };
     }
-}
+} 

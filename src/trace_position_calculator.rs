@@ -33,8 +33,6 @@ pub fn calculate_node_pos_traced_on_distance_from_head (
 
 #[cfg(test)]
 mod tests {
-    use bevy::math::VectorSpace;
-
     use crate::snake_model::TraceItem;
 
     use super::*;
