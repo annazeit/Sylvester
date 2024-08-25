@@ -4,16 +4,18 @@ use crate::snake_model::*;
 
 #[cfg(test)]
 mod tests {
-    use std::f32::consts;
+    use std::f32::consts::{self, PI};
 
     use super::*;
 
-    fn assert_vec2_eq(a: Vec2, b: Vec2){
-        let delta_max: f32 = 0.001;
-        let dx = f32::abs(a.x - b.x);
-        assert!(dx < delta_max);
-        let dy = f32::abs(a.y - b.y);
-        assert!(dy < delta_max);
+    fn assert_vec2_eq(a: Vec2, b: Vec2) {
+        assert_float_eq(a.x, b.x);
+        assert_float_eq(a.y, b.y)
+    }
+    fn assert_float_eq(a: f32, b: f32) {
+        let delta_max = 0.001;
+        let c = f32::abs(a - b);
+        assert!(c < delta_max)
     }
 
     #[test]
@@ -34,7 +36,7 @@ mod tests {
         let mut snake = snake_model_new(0);
         let traces_original = snake.trace.clone();
         snake.tracing_step = 50.0;
-        snake.head_direction_angle = 0.0;
+        snake.head_direction_angle = PI / 2.0;
         snake.movement_speed = 3.0;
         head_move_pure(crate::snake_model::SnakeMoveDirection::Forward, 10.0, &mut snake);
         let expected_move = Vec2::new(0.0, 30.0);
@@ -61,7 +63,7 @@ mod tests {
         let mut snake = snake_model_new(0);
         let traces_original = snake.trace.clone();
         snake.tracing_step = 50.0;
-        snake.head_direction_angle = consts::PI;
+        snake.head_direction_angle = -PI / 2.0;
         snake.movement_speed = 3.0;
         head_move_pure(crate::snake_model::SnakeMoveDirection::Forward, 10.0, &mut snake);
         let expected_move = Vec2::new(0.0, -30.0);
@@ -75,7 +77,7 @@ mod tests {
         let mut snake = snake_model_new(0);
         let traces_original = snake.trace.clone();
         snake.tracing_step = 50.0;
-        snake.head_direction_angle = consts::PI;
+        snake.head_direction_angle = -PI / 2.0;
         snake.movement_speed = 3.0;
         head_move_pure(crate::snake_model::SnakeMoveDirection::Backward, 10.0, &mut snake);
         let expected_move = Vec2::new(0.0, 30.0);
@@ -89,7 +91,7 @@ mod tests {
         let mut snake = snake_model_new(0);
         let mut traces_expected = snake.trace.clone();
         snake.tracing_step = 50.0;
-        snake.head_direction_angle = 0.0;
+        snake.head_direction_angle = PI / 2.0;
         snake.movement_speed = 5.0;
         head_move_pure(crate::snake_model::SnakeMoveDirection::Forward, 10.0, &mut snake);
         let expected_move = Vec2::new(0.0, 50.0);
@@ -102,8 +104,12 @@ mod tests {
         });
         let traces_expected_vect: Vec<TraceItem> = traces_expected.clone().into_iter().collect();
         let trace_actual: Vec<TraceItem> = snake.trace.clone().into_iter().collect();
-        
-        assert_eq!(trace_actual, traces_expected_vect);
+        let mut trace_zip_iter = traces_expected_vect.iter().zip(trace_actual.iter());
+
+        for (expected, actual) in trace_zip_iter {
+            assert_eq!(expected.index, actual.index);
+            assert_vec2_eq(expected.pos, actual.pos);
+        }
     }
 
     #[test]
@@ -112,7 +118,7 @@ mod tests {
         let mut traces_expected = snake.trace.clone();
         snake.tracing_step = 50.0;
         snake.head_pos = Vec2::new(0.0, 100.0);
-        snake.head_direction_angle = 0.0;
+        snake.head_direction_angle = PI / 2.0;
         snake.movement_speed = 5.0;
         head_move_pure(crate::snake_model::SnakeMoveDirection::Forward, 10.0, &mut snake);
         let expected_move = Vec2::new(0.0, 150.0);
@@ -125,8 +131,12 @@ mod tests {
         });
         let traces_expected_vect: Vec<TraceItem> = traces_expected.clone().into_iter().collect();
         let trace_actual: Vec<TraceItem> = snake.trace.clone().into_iter().collect();
-        
-        assert_eq!(trace_actual, traces_expected_vect);
+        let mut trace_zip_iter = traces_expected_vect.iter().zip(trace_actual.iter());
+
+        for (expected, actual) in trace_zip_iter {
+            assert_eq!(expected.index, actual.index);
+            assert_vec2_eq(expected.pos, actual.pos);
+        }
     }
 
     #[test]

@@ -2,6 +2,7 @@ use bevy::prelude::*;
 use bevy::asset::AssetServer;
 use bevy::app::{App, Plugin, Startup, Update};
 use bevy::math::Vec2;
+use consts::PI;
 use std::f32::*;
 
 use bevy::color::palettes::css::*;
@@ -40,8 +41,8 @@ fn keyboard_movement_up_down_impure(keyboard_input: &Res<ButtonInput<KeyCode>>) 
 
 fn keyboard_rotation(keyboard_input: &Res<ButtonInput<KeyCode>>, snake: &SnakeModel, time: &Res<Time>) -> f32 {
     let unit: f32 = {
-        if keyboard_input.pressed(KeyCode::ArrowRight) { 1.0 }
-        else if keyboard_input.pressed(KeyCode::ArrowLeft) { -1.0 }
+        if keyboard_input.pressed(KeyCode::ArrowRight) { -1.0 }
+        else if keyboard_input.pressed(KeyCode::ArrowLeft) { 1.0 }
         else { 0.0 }
     };
     consts::PI / 180.0 * snake.rotation_speed_in_degrees * unit * time.delta_seconds()
@@ -57,8 +58,8 @@ fn draw_tail(gizmos: &mut Gizmos, radius: f32, snake: &SnakeModel, query: &Query
     let mut distance = radius * 2.0;
     for i in 1..=2 {
         let shift_from_head: Vec2 = {
-            let x_tail = f32::sin(snake.head_direction_angle - consts::PI) * distance;
-            let y_tail = f32::cos(snake.head_direction_angle - consts::PI) * distance;
+            let x_tail = f32::cos(snake.head_direction_angle - consts::PI) * distance;
+            let y_tail = f32::sin(snake.head_direction_angle - consts::PI) * distance;
             Vec2::new(x_tail, y_tail)
         };
 
@@ -94,16 +95,21 @@ fn get_last_trace_index_before_clean(snake: &SnakeModel, gizmos: &mut Gizmos) ->
 fn draw_nodes(snake: &mut SnakeModel, gizmos: &mut Gizmos, mut query_visual_element: &mut Query<&mut Transform, With<CreatureBodyVisualElement>>) {
     for i in 0..=(snake.size) as i32 {
         let distance_from_head = i as f32 * (snake.tracing_step * 2.0);
-        let mut trace_positions_iterator = snake.trace.iter().map(|p| p.pos);
-        let node_pos = calculate_node_pos_traced_on_distance_from_head(snake.head_pos, &mut trace_positions_iterator, snake.trace.len(), distance_from_head);
-        //gizmos.circle_2d(node_pos, snake.node_radius, BLUE);
+        let trace_positions_iterator = snake.trace.iter().map(|p| p.pos);
+        let (node_pos, node_direction) = calculate_node_pos_traced_on_distance_from_head(
+            snake.head_pos, 
+            snake.head_direction_angle,
+            trace_positions_iterator, 
+            snake.trace.len(), 
+            distance_from_head
+        );
+        gizmos.circle_2d(node_pos, snake.node_radius, BLUE);
         
 
         let snake_node = {
             let mut node: Mut<Transform> = query_visual_element.get_mut(snake.body[i as usize].node_type).unwrap();
-            //let node_pos = calculate_node_pos_traced_on_distance_from_head(snake.head_pos, &mut snake.trace.iter().map(|p| p.pos), snake.trace.len(), snake.body[1].distance_from_head);
             node.translation = Vec3::new(node_pos.x, node_pos.y, 0.0); 
-            node.rotation = Quat::from_rotation_z(-snake.head_direction_angle);
+            node.rotation = Quat::from_rotation_z(node_direction + PI / 2.0 + PI);
         };
     }
 }
@@ -134,6 +140,7 @@ fn snake_update (
         let snake_head = {
             let mut head: Mut<Transform> = query_visual_element.get_mut(snake.body[0].node_type).unwrap();
             head.translation = Vec3::new(snake.head_pos.x, snake.head_pos.y, 0.0); 
+            head.rotation = Quat::from_rotation_z(snake.head_direction_angle + PI / 2.0 + PI);
         };  
     }
 } 

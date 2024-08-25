@@ -135,8 +135,8 @@ fn food_on_bound(food: &mut Food, bound_query: &Query<&mut Bound> ) {
 
 fn draw_food(food: &mut Food, gizmos: &mut Gizmos, query: &Query<&VisualDiagnostic>) {
     let food_move = {
-        let x = f32::sin(food.direction);
-        let y = f32::cos(food.direction);
+        let x = f32::cos(food.direction);
+        let y = f32::sin(food.direction);
         Vec2::new(x, y)
     };
     food.pos += food_move;

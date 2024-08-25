@@ -56,7 +56,7 @@ pub fn spine_from_size(mut commands: &mut Commands,  asset_server: &Res<AssetSer
     let node_entity = commands.spawn((
         SpriteBundle {
             texture: asset_server.load("SpinePart.png"),
-            transform: Transform::from_xyz(1000.0, 0.0, 0.0).with_scale(Vec3::new(0.2, 0.2, 0.0)),
+            transform: Transform::from_xyz(0.0, 0.0, 0.0).with_scale(Vec3::new(0.2, 0.2, 0.0)),
             ..default()
         },
         CreatureBodyVisualElement

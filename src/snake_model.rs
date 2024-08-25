@@ -3,6 +3,7 @@ use bevy::math::Vec2;
 use bevy::prelude::{default, Commands, Component, Entity, Res};
 use bevy::sprite::SpriteBundle;
 use std::collections::LinkedList;
+use std::f32::consts::PI;
 
 #[derive(PartialEq)]
 #[derive(Debug)]
@@ -65,7 +66,7 @@ pub fn snake_model_new(i: i32) -> SnakeModel {
     };
     SnakeModel {
         head_pos,
-        head_direction_angle: 0.0,
+        head_direction_angle: PI / 2.0,
         head_radius: 50.0,
         movement_speed: 150.0,
         rotation_speed_in_degrees: 3.0,
@@ -108,8 +109,8 @@ pub fn head_move_pure(keyboard_up_down_input: SnakeMoveDirection, time_delta_sec
         SnakeMoveDirection::Stop => { 0.0 }
     };
     let movement = keyboard_up_down_input_ratio * snake.movement_speed;
-    let x_head = f32::sin(snake.head_direction_angle) * movement * time_delta_seconds;
-    let y_head = f32::cos(snake.head_direction_angle) * movement * time_delta_seconds;
+    let x_head = f32::cos(snake.head_direction_angle) * movement * time_delta_seconds;
+    let y_head = f32::sin(snake.head_direction_angle) * movement * time_delta_seconds;
 
     let new_head_move = Vec2::new(x_head, y_head);
     let last_trace_point = snake.trace.front().unwrap();
