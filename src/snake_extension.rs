@@ -96,7 +96,7 @@ fn draw_nodes(snake: &mut SnakeModel, gizmos: &mut Gizmos, mut query_visual_elem
         let distance_from_head = i as f32 * (snake.tracing_step * 2.0);
         let mut trace_positions_iterator = snake.trace.iter().map(|p| p.pos);
         let node_pos = calculate_node_pos_traced_on_distance_from_head(snake.head_pos, &mut trace_positions_iterator, snake.trace.len(), distance_from_head);
-        gizmos.circle_2d(node_pos, snake.node_radius, BLUE);
+        //gizmos.circle_2d(node_pos, snake.node_radius, BLUE);
         
 
         let snake_node = {
