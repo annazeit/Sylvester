@@ -5,28 +5,28 @@ use std::f32::*;
 fn vec_angle (pos: Vec2) -> Option<f32>{
     if pos.x > 0.0 {
         if pos.y > 0.0 {
-            return Some(f32::atan(pos.y / pos.x)); // top right
+            return Some(f32::atan(pos.y / pos.x)); // right top
         }
         else if pos.y < 0.0 {
-            return Some(-f32::atan(pos.y / pos.x)); // bottom right
+            return Some(f32::atan(pos.y / pos.x)); // right bottom
         }
-        else { return Some(0.0)}
+        else { return Some(0.0)} // right middle
     }
     else if pos.x < 0.0 {
         if pos.y > 0.0 {
-            return Some(PI - f32::atan(pos.y / pos.x)); // top left
+            return Some(PI + f32::atan(pos.y / pos.x)); // left top
         }
         else if pos.y < 0.0 {
-            return Some(PI + f32::atan(pos.y / pos.x)); // bottom left
+            return Some(-PI + f32::atan(pos.y / pos.x)); // left bottom
         }
-        else {return Some(0.0);}
+        else {return Some(PI);} // left middle
     }
     else { 
         if pos.y > 0.0 {
-            return Some(PI / 2.0); // top middle
+            return Some(PI / 2.0); // middle top
         }
         else if pos.y < 0.0 {
-            return Some(-PI / 2.0); // bottom middle
+            return Some(-PI / 2.0); // middle bottom
         }
         else {return None;} // origin
     }
@@ -304,56 +304,72 @@ mod tests {
     fn positive_and_zero() {
         let pos = Vec2::new(10.0, 0.0);
         let actual = vec_angle(pos);
-        let expected = Some(0.0);
+        let atan = f32::atan2(pos.y, pos.x); // 0.0
+        let expected = Some(atan); 
+        println!("{:?}", expected);
         assert_eq!(actual, expected);
     }    
     #[test]
     fn negative_and_zero() {
         let pos = Vec2::new(-10.0, 0.0);
         let actual = vec_angle(pos);
-        let expected = Some(0.0);
+        let atan = f32::atan2(pos.y, pos.x); // PI
+        let expected = Some(atan);
+        println!("{:?}", expected);
         assert_eq!(actual, expected);
     }    
     #[test]
     fn zero_and_positive() {
         let pos = Vec2::new(0.0, 10.0);
         let actual = vec_angle(pos);
-        let expected = Some(PI / 2.0);
+        let atan = f32::atan2(pos.y, pos.x); // PI / 2.0
+        let expected = Some(atan); 
+        println!("{:?}", expected); 
         assert_eq!(actual, expected);
     }   
     #[test]
     fn zero_and_negative() {
         let pos = Vec2::new(0.0, -10.0);
         let actual = vec_angle(pos);
-        let expected = Some(-PI / 2.0);
+        let atan = f32::atan2(pos.y, pos.x); // -PI / 2.0
+        let expected = Some(atan);
+        println!("{:?}", expected); 
         assert_eq!(actual, expected);
     }    
     #[test]
     fn positive_and_positive() {
         let pos = Vec2::new(10.0, 10.0);
         let actual = vec_angle(pos);
-        let expected = Some(PI / 4.0);
+        let atan = f32::atan2(pos.y, pos.x); // PI / 4.0
+        let expected = Some(atan);
+        println!("{:?}", expected);
         assert_eq!(actual, expected);
     }    
     #[test]
     fn positive_and_negative() {
         let pos = Vec2::new(10.0, -10.0);
         let actual = vec_angle(pos);
-        let expected = Some(PI / 4.0);
+        let atan = f32::atan2(pos.y, pos.x); // -PI / 4.0
+        let expected = Some(atan);
+        println!("{:?}", expected);
         assert_eq!(actual, expected);
     }
     #[test]
     fn negative_and_negative() {
         let pos = Vec2::new(-10.0, -10.0);
         let actual = vec_angle(pos);
-        let expected = Some(PI + PI / 4.0);
+        let atan = f32::atan2(pos.y, pos.x); // -PI + PI / 4.0
+        let expected = Some(atan);
+        println!("{:?}", expected);
         assert_eq!(actual, expected);
     }
     #[test]
     fn negative_and_positive() {
         let pos = Vec2::new(-10.0, 10.0);
         let actual = vec_angle(pos);
-        let expected = Some(PI + PI / 4.0);
+        let atan = f32::atan2(pos.y, pos.x); // PI - PI / 4.0
+        let expected = Some(atan);
+        println!("{:?}", expected);
         assert_eq!(actual, expected);
     }
     #[test]
