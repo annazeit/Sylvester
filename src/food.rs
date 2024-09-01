@@ -70,7 +70,7 @@ fn food_start (mut commands: Commands, asset_server: Res<AssetServer>) {
     for _ in 0..5 {
         commands.spawn((
             SpriteBundle {
-                texture: asset_server.load("Test.png"),
+                texture: asset_server.load("Food.png"),
                 transform: Transform::from_xyz(120.0, 0.0, 0.0).with_scale(Vec3::new(scale, scale, scale)),
                 ..default()
             },

@@ -1,6 +1,5 @@
-use bevy::asset::AssetServer;
 use bevy::math::Vec2;
-use bevy::prelude::{default, Commands, Component, Entity, Res};
+use bevy::prelude::{Commands, Component, Entity, Res};
 use bevy::sprite::SpriteBundle;
 use std::collections::LinkedList;
 use std::f32::consts::PI;

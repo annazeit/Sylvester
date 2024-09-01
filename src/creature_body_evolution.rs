@@ -9,7 +9,7 @@ type SpawnSnakeSpineNode = fn() -> Entity;
 #[derive(Component)]
 pub struct CreatureBodyVisualElement;
 
-pub fn spine_from_size(mut commands: &mut Commands,  asset_server: &Res<AssetServer>, mut snake: &mut SnakeModel) -> Vec<SnakeSpineNode> {
+pub fn spine_from_size(commands: &mut Commands,  asset_server: &Res<AssetServer>, snake: &mut SnakeModel) -> Vec<SnakeSpineNode> {
     // if size > 20 { 
     //     let big_entity = spawn();
     //     return vec! [ 
@@ -52,7 +52,7 @@ pub fn spine_from_size(mut commands: &mut Commands,  asset_server: &Res<AssetSer
         node_type: head_entity,
     });
 
-    for i in 0..100 {
+    for _ in 0..100 {
     let node_entity = commands.spawn((
         SpriteBundle {
             texture: asset_server.load("SpinePart.png"),

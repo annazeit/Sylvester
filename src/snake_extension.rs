@@ -7,7 +7,6 @@ use std::f32::*;
 
 use bevy::color::palettes::css::*;
 use bevy::input::ButtonInput;
-use bevy::sprite::SpriteBundle;
 
 use crate::creature_body_evolution::*;
 use crate::grid::*;
@@ -96,20 +95,23 @@ fn draw_nodes(snake: &mut SnakeModel, gizmos: &mut Gizmos, mut query_visual_elem
     for i in 0..=(snake.size) as i32 {
         let distance_from_head = i as f32 * (snake.tracing_step * 2.0);
         let trace_positions_iterator = snake.trace.iter().map(|p| p.pos);
-        let (node_pos, node_direction) = calculate_node_pos_traced_on_distance_from_head(
+        let node_calc_result = calculate_node_pos_traced_on_distance_from_head(
             snake.head_pos, 
             snake.head_direction_angle,
             trace_positions_iterator, 
             snake.trace.len(), 
             distance_from_head
         );
-        gizmos.circle_2d(node_pos, snake.node_radius, BLUE);
+        //gizmos.circle_2d(node_pos, snake.node_radius, BLUE);
         
 
         let snake_node = {
             let mut node: Mut<Transform> = query_visual_element.get_mut(snake.body[i as usize].node_type).unwrap();
-            node.translation = Vec3::new(node_pos.x, node_pos.y, 0.0); 
-            node.rotation = Quat::from_rotation_z(node_direction + PI / 2.0 + PI);
+            node.translation = Vec3::new(node_calc_result.position.x, node_calc_result.position.y, 0.0); 
+            let d = 
+                (node_calc_result.directions.direction_current + node_calc_result.directions.direction_next + node_calc_result.directions.direction_previous) / 3.0;
+            println!("{:?}", node_calc_result.directions.segment_distance_fraction.to_string());
+            node.rotation = Quat::from_rotation_z(d + PI / 2.0 + PI);
         };
     }
 }
