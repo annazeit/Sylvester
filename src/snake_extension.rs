@@ -99,7 +99,6 @@ fn draw_nodes(snake: &mut SnakeModel, gizmos: &mut Gizmos, mut query_visual_elem
             snake.head_pos, 
             snake.head_direction_angle,
             trace_positions_iterator, 
-            snake.trace.len(), 
             distance_from_head
         );
         //gizmos.circle_2d(node_pos, snake.node_radius, BLUE);
@@ -108,8 +107,12 @@ fn draw_nodes(snake: &mut SnakeModel, gizmos: &mut Gizmos, mut query_visual_elem
         let snake_node = {
             let mut node: Mut<Transform> = query_visual_element.get_mut(snake.body[i as usize].node_type).unwrap();
             node.translation = Vec3::new(node_calc_result.position.x, node_calc_result.position.y, 0.0); 
-            let d = 
-                (node_calc_result.directions.direction_current + node_calc_result.directions.direction_next + node_calc_result.directions.direction_previous) / 3.0;
+
+            let d = angle_average_calculator(& vec![
+                node_calc_result.directions.direction_previous, 
+                node_calc_result.directions.direction_current,
+                node_calc_result.directions.direction_next
+            ]);
             println!("{:?}", node_calc_result.directions.segment_distance_fraction.to_string());
             node.rotation = Quat::from_rotation_z(d + PI / 2.0 + PI);
         };

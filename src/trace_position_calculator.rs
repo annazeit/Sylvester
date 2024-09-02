@@ -1,5 +1,5 @@
 use std::{collections::LinkedList, f32::consts::PI};
-use bevy::math::{Vec2, VectorSpace};
+use bevy::{math::{Vec2, VectorSpace}, prelude::{IntoSystem, Transform}};
 use std::f32::*;
 
 fn vec_angle (pos: Vec2) -> Option<f32>{
@@ -57,16 +57,16 @@ pub struct CalculationResult {
     pub directions: CalculatedDirections
 }
 
-/// Input angles must be in radians.
-/// Result vector will be zero or positive number less than PI / 2.
-pub fn angle_radian_normalize(a: f32) -> f32 {
-    let result = {
-        let a = a % (PI * 2.0);
-        if a >= 0.0 { a }
-        else { PI * 2.0 + a }
-    };
-    debug_assert!(result >= 0.0 && result < PI * 2.0);
-    result
+/// calculates the average of three angles
+/// https://www.themathdoctors.org/averaging-angles/
+pub fn angle_average_calculator(items: &Vec<f32>) -> f32 {
+    let mut sum_sin = 0.0;
+    let mut sum_cos = 0.0;
+    for a in items {
+        sum_sin += a.sin();
+        sum_cos += a.cos();
+    }
+    return f32::atan2(sum_sin, sum_cos)
 }
 
 //calculates node_pos so it can be drawn in the trace
@@ -74,7 +74,6 @@ pub fn calculate_node_pos_traced_on_distance_from_head (
     head_pos: Vec2, 
     head_direction: f32,
     trace: impl Iterator<Item = Vec2>, 
-    trace_length: usize,
     distance_from_head: f32
 ) -> CalculationResult {
     let mut direction_current = head_direction;
@@ -87,12 +86,14 @@ pub fn calculate_node_pos_traced_on_distance_from_head (
     loop { 
         match iterator.next() {
             None => { 
+                let direction_current_inverse_vector = Vec2::from_angle(direction_current + PI) * total_distance;
+                let position = checkpoint_previous + direction_current_inverse_vector;
                 return CalculationResult {
-                    position: checkpoint_previous, 
+                    position, 
                     directions: CalculatedDirections {
-                        direction_current: angle_radian_normalize(direction_current),
-                        direction_previous: angle_radian_normalize(direction_previous),
-                        direction_next: angle_radian_normalize(direction_current),
+                        direction_current: direction_current,
+                        direction_previous: direction_previous,
+                        direction_next: direction_current,
                         segment_distance_fraction: 1.0
                     }
                 };
@@ -130,9 +131,9 @@ pub fn calculate_node_pos_traced_on_distance_from_head (
                     return CalculationResult{
                         position: position_result, 
                         directions: CalculatedDirections {
-                            direction_current: angle_radian_normalize(direction_current),
-                            direction_previous: angle_radian_normalize(direction_previous),
-                            direction_next: angle_radian_normalize(direction_next),
+                            direction_current: direction_current,
+                            direction_previous: direction_previous,
+                            direction_next: direction_next,
                             segment_distance_fraction
                         }
                     };
@@ -176,7 +177,6 @@ mod tests {
             head_pos, 
             PI / 2.0,
             trace_positions, 
-            list.len(), 
             10.0
         );
 
@@ -191,7 +191,6 @@ mod tests {
             Vec2::new(0.0, 0.0), 
             PI,
             LinkedList::from(trace).into_iter(), 
-            trace.len(), 
             3.0
         );
         let expected_result = Vec2::new(3.0, 0.0);
@@ -218,10 +217,9 @@ mod tests {
                 head_pos, 
                 PI / 2.0,
                 LinkedList::from(trace).into_iter(), 
-                trace.len(), 
                 distance_from_head
             );
-            assert_eq!(actual.position, expected_pos);
+            assert_vec2_eq(actual.position, expected_pos);
         }
         
     }
@@ -250,7 +248,6 @@ mod tests {
                 head_pos, 
                 PI / 2.0,
                 LinkedList::from(trace).into_iter(), 
-                trace.len(), 
                 distance_from_head
             );
             assert_vec2_eq(actual.position, expected_pos);
@@ -285,7 +282,6 @@ mod tests {
                 head_pos, 
                 PI / 2.0,
                 LinkedList::from(trace).into_iter(), 
-                trace.len(), 
                 distance_from_head
             );
             assert_vec2_eq(actual.position, expected_pos);
@@ -313,7 +309,6 @@ mod tests {
                 head_pos, 
                 PI / 2.0,
                 LinkedList::from(trace).into_iter(), 
-                trace.len(), 
                 distance_from_head
             );
             assert_vec2_eq(actual.position, expected_pos);
@@ -346,7 +341,6 @@ mod tests {
                 head_pos, 
                 PI / 2.0,
                 LinkedList::from(trace).into_iter(), 
-                trace.len(), 
                 distance_from_head
             );
             assert_vec2_eq(actual.position, expected_pos);
@@ -381,7 +375,6 @@ mod tests {
                 head_pos, 
                 PI / 2.0,
                 LinkedList::from(trace).into_iter(), 
-                trace.len(), 
                 distance_from_head
             );
 

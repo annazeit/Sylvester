@@ -72,7 +72,7 @@ pub fn snake_model_new(i: i32) -> SnakeModel {
         trace_counter: 0,
         trace: LinkedList::from([trace_item]),
         tracing_step: 10.0,
-        size: 5.0,
+        size: 15.0,
         node_radius: 10.0,
         body: vec![],
     }
