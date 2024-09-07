@@ -6,3 +6,4 @@ edition = "2021"
 [dependencies] # make sure this is the latest version
 bevy = { version = "0.14" }
 rand = "0.8.5"
+almost = "0.2.0"

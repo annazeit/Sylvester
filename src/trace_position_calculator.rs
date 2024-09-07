@@ -163,7 +163,7 @@ mod tests {
         let c = f32::abs(a - b);
         assert!(c < delta_max);
     }
-
+    
     // test how to create linked list from TraceItem, create iterator and map trace postions iterator.
     #[test]
     fn linked_list_map() {

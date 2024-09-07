@@ -9,6 +9,7 @@ use bevy::color::palettes::css::*;
 use bevy::input::ButtonInput;
 
 use crate::creature_body_evolution::*;
+use crate::foo::*;
 use crate::grid::*;
 use crate::snake_model::*;
 use crate::trace_position_calculator::*;
@@ -107,13 +108,14 @@ fn draw_nodes(snake: &mut SnakeModel, gizmos: &mut Gizmos, query_visual_element:
             let mut node: Mut<Transform> = query_visual_element.get_mut(snake.body[i as usize].node_type).unwrap();
             node.translation = Vec3::new(node_calc_result.position.x, node_calc_result.position.y, 0.0); 
 
-            let d = angle_average_calculator(& vec![
+            println!("{:?}", node_calc_result.directions.segment_distance_fraction.to_string());
+            let a = interpolate_direction(
                 node_calc_result.directions.direction_previous, 
                 node_calc_result.directions.direction_current,
-                node_calc_result.directions.direction_next
-            ]);
-            println!("{:?}", node_calc_result.directions.segment_distance_fraction.to_string());
-            node.rotation = Quat::from_rotation_z(d + PI / 2.0 + PI);
+                node_calc_result.directions.direction_next,
+                node_calc_result.directions.segment_distance_fraction,
+            );
+            node.rotation = Quat::from_rotation_z(a + PI / 2.0 + PI);
         };
     }
 }
