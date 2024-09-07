@@ -1,6 +1,5 @@
 use std::{collections::LinkedList, f32::consts::PI};
-use bevy::{math::{Vec2, VectorSpace}, prelude::{IntoSystem, Transform}};
-use std::f32::*;
+use bevy::{math::Vec2};
 
 fn vec_angle (pos: Vec2) -> Option<f32>{
     if pos.x > 0.0 {
@@ -46,9 +45,9 @@ pub struct CalculatedDirections {
     pub direction_next: f32,
 
     // Current trace segment is a line. 
-    // If result position is in the beginning of the secment then fraction is 0.
+    // If result position is in the beginning of the segment then fraction is 0.
     // If result position is in the middle if the segment then fraction is 0.5.
-    // If result positon is tn the end of the segment is 1.
+    // If result positon is in the end of the segment is 1.
     pub segment_distance_fraction: f32
 }
 
@@ -156,13 +155,13 @@ mod tests {
 
     fn assert_vec2_eq(a: Vec2, b: Vec2) {
         assert_float_eq(a.x, b.x);
-        assert_float_eq(a.y, b.y)
+        assert_float_eq(a.y, b.y);
     }
 
     fn assert_float_eq(a: f32, b: f32) {
         let delta_max = 0.001;
         let c = f32::abs(a - b);
-        assert!(c < delta_max)
+        assert!(c < delta_max);
     }
 
     // test how to create linked list from TraceItem, create iterator and map trace postions iterator.
@@ -177,35 +176,36 @@ mod tests {
             head_pos, 
             PI / 2.0,
             trace_positions, 
-            10.0
+            10.0,
         );
 
     }
 
     #[test]
     fn basic_test() {
-        let trace: [Vec2; 1] = [
-            Vec2::new(5.0, 0.0)
+        let trace: [Vec2; 2] = [
+            Vec2::new(0.0, 0.0),
+            Vec2::new(5.0, 0.0),
         ];
         let actual = calculate_node_pos_traced_on_distance_from_head(
             Vec2::new(0.0, 0.0), 
             PI,
             LinkedList::from(trace).into_iter(), 
-            3.0
+            5.0,
         );
-        let expected_result = Vec2::new(3.0, 0.0);
-        assert_eq!(actual.position, expected_result);
-        assert_eq!(actual.directions.direction_current, PI);
-        assert_eq!(actual.directions.direction_previous, PI);
-        assert_eq!(actual.directions.direction_next, PI)
+        let expected_result = Vec2::new(5.0, 0.0);
+        assert_vec2_eq(actual.position, expected_result);
+        assert_float_eq(actual.directions.direction_current, PI);
+        assert_float_eq(actual.directions.direction_previous, PI);
+        assert_float_eq(actual.directions.direction_next, PI);
+        assert_float_eq(actual.directions.segment_distance_fraction, 1.0);
     }
 
     #[test]
     fn segment_smaller_than_distance_from_head_test() {
         let head_pos = Vec2::new(0.0, 0.0);
         let trace = [
-            Vec2::new(5.0, 5.0),
-            
+            Vec2::new(5.0, 5.0),   
         ];
 
         let expected_results = [
@@ -217,11 +217,13 @@ mod tests {
                 head_pos, 
                 PI / 2.0,
                 LinkedList::from(trace).into_iter(), 
-                distance_from_head
+                distance_from_head,
             );
             assert_vec2_eq(actual.position, expected_pos);
+            assert_float_eq(actual.directions.direction_current, -PI + PI / 4.0);
+            assert_float_eq(actual.directions.direction_previous, PI / 2.0);
+            assert_float_eq(actual.directions.segment_distance_fraction, 1.0);
         }
-        
     }
     
     #[test]
@@ -236,7 +238,6 @@ mod tests {
             Vec2::new(20.0, -20.0),
             // x - 15
             Vec2::new(5.0, -20.0),
-            
         ];
 
         let expected_results = [
@@ -248,13 +249,12 @@ mod tests {
                 head_pos, 
                 PI / 2.0,
                 LinkedList::from(trace).into_iter(), 
-                distance_from_head
+                distance_from_head,
             );
             assert_vec2_eq(actual.position, expected_pos);
-
-            assert_eq!(actual.directions.direction_current, 0.0);
-            assert_eq!(actual.directions.direction_previous, PI / 2.0);
-            assert_eq!(actual.directions.direction_current, 0.0);
+            assert_float_eq(actual.directions.direction_current, 0.0);
+            assert_float_eq(actual.directions.direction_previous, PI / 2.0);
+            assert_float_eq(actual.directions.segment_distance_fraction, 1.0);
         }
         
     }
@@ -282,26 +282,36 @@ mod tests {
                 head_pos, 
                 PI / 2.0,
                 LinkedList::from(trace).into_iter(), 
-                distance_from_head
+                distance_from_head,
             );
             assert_vec2_eq(actual.position, expected_pos);
+
             let direction_current_expected = -PI + angle_30_degree_in_radians;
+            let direction_previous_expected = 0.0;
+
             assert_float_eq(actual.directions.direction_current, direction_current_expected);
+            assert_float_eq(actual.directions.direction_previous, direction_previous_expected);
+            assert_float_eq(actual.directions.segment_distance_fraction, 1.0);
         }
         
     }
 
     #[test]
     fn one_hudred_ten_degree_test() {
+        let triangle_hypotenuse = 30.0;
+        let triangle_side_oposite = 17.32051;
+        let triangle_side_adjesent =  10.0;
+        let angle_60_degree_in_radians = 1.0472;
+
         let head_pos = Vec2::new(10.0, 0.0);
         let trace = [
             Vec2::new(0.0, 0.0),
-            Vec2::new(10.0, -17.32051),
+            Vec2::new(triangle_side_adjesent, triangle_side_oposite),
             
         ];
 
         let expected_results = [
-            (30.0, Vec2::new(10.0, -17.32051)),
+            (triangle_hypotenuse, Vec2::new(triangle_side_adjesent, triangle_side_oposite)),
         ];
 
         for (distance_from_head, expected_pos) in expected_results {
@@ -309,9 +319,16 @@ mod tests {
                 head_pos, 
                 PI / 2.0,
                 LinkedList::from(trace).into_iter(), 
-                distance_from_head
+                distance_from_head,
             );
             assert_vec2_eq(actual.position, expected_pos);
+
+            let direction_current_expected = -PI + angle_60_degree_in_radians;
+            let direction_previous_expected = 0.0;
+            
+            assert_float_eq(actual.directions.direction_current, direction_current_expected);
+            assert_float_eq(actual.directions.direction_previous, direction_previous_expected);
+            assert_float_eq(actual.directions.segment_distance_fraction, 1.0);
         }
         
     }
@@ -328,8 +345,6 @@ mod tests {
             Vec2::new(-10.0, 0.0),
             Vec2::new(-10.0, 10.0),
             Vec2::new(0.0, 10.0),
-
-            
         ];
 
         let expected_results = [
@@ -341,9 +356,16 @@ mod tests {
                 head_pos, 
                 PI / 2.0,
                 LinkedList::from(trace).into_iter(), 
-                distance_from_head
+                distance_from_head,
             );
             assert_vec2_eq(actual.position, expected_pos);
+
+            let direction_current_expected = -PI / 2.0;
+            let direction_previous_expected = PI / 2.0;
+            
+            assert_float_eq(actual.directions.direction_current, direction_current_expected);
+            assert_float_eq(actual.directions.direction_previous, direction_previous_expected);
+            assert_float_eq(actual.directions.segment_distance_fraction, 1.0);
         }
         
     }
@@ -363,7 +385,6 @@ mod tests {
             Vec2::new(0.0, 22.51635),
             Vec2::new(0.0, 10.018846),
             Vec2::new(0.0, -10.0),
-            
         ];
 
         let expected_results = [
@@ -375,7 +396,7 @@ mod tests {
                 head_pos, 
                 PI / 2.0,
                 LinkedList::from(trace).into_iter(), 
-                distance_from_head
+                distance_from_head,
             );
 
             println!("!!!actual_pos: {:?}", actual.position);
@@ -383,6 +404,53 @@ mod tests {
             assert_vec2_eq(actual.position, expected_pos);
         }
     }
+#[test]
+fn segment_distance_fraction_05_test() {
+    let trace: [Vec2; 3] = [
+            Vec2::new(0.0, 0.0),
+            Vec2::new(10.0, 0.0),
+            Vec2::new(10.0, 10.0),
+        ];
+        
+        let expected_results = [
+            (15.0, Vec2::new(10.0, 5.0)),
+        ];
+
+        for (distance_from_head, expected_pos) in expected_results {
+            let actual = calculate_node_pos_traced_on_distance_from_head(
+                Vec2::new(0.0, 0.0), 
+                PI,
+                LinkedList::from(trace).into_iter(), 
+                distance_from_head,
+            );
+            assert_vec2_eq(actual.position, expected_pos);
+            assert_float_eq(actual.directions.segment_distance_fraction, 0.5);
+        }        
+}
+
+#[test]
+fn segment_distance_fraction_025_test() {
+    let trace: [Vec2; 3] = [
+            Vec2::new(0.0, 0.0),
+            Vec2::new(10.0, 0.0),
+            Vec2::new(10.0, 10.0),
+        ];
+        
+        let expected_results = [
+            (12.5, Vec2::new(10.0, 2.5)),
+        ];
+
+        for (distance_from_head, expected_pos) in expected_results {
+            let actual = calculate_node_pos_traced_on_distance_from_head(
+                Vec2::new(0.0, 0.0), 
+                PI,
+                LinkedList::from(trace).into_iter(), 
+                distance_from_head,
+            );
+            assert_vec2_eq(actual.position, expected_pos);
+            assert_float_eq(actual.directions.segment_distance_fraction, 0.25);
+        }       
+}
 
     #[test]
     fn positive_and_zero() {

@@ -12,7 +12,6 @@ use crate::creature_body_evolution::*;
 use crate::grid::*;
 use crate::snake_model::*;
 use crate::trace_position_calculator::*;
-use crate::snake_model::*;
 
 pub struct SnakePlugin;
 
@@ -91,7 +90,7 @@ fn get_last_trace_index_before_clean(snake: &SnakeModel, gizmos: &mut Gizmos) ->
     return last_trace_index_before_clean;
 }
 
-fn draw_nodes(snake: &mut SnakeModel, gizmos: &mut Gizmos, mut query_visual_element: &mut Query<&mut Transform, With<CreatureBodyVisualElement>>) {
+fn draw_nodes(snake: &mut SnakeModel, gizmos: &mut Gizmos, query_visual_element: &mut Query<&mut Transform, With<CreatureBodyVisualElement>>) {
     for i in 0..=(snake.size) as i32 {
         let distance_from_head = i as f32 * (snake.tracing_step * 2.0);
         let trace_positions_iterator = snake.trace.iter().map(|p| p.pos);

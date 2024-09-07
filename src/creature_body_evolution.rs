@@ -2,9 +2,6 @@ use bevy::prelude::*;
 use bevy::{sprite::SpriteBundle};
 use crate::snake_model::{SnakeModel, SnakeSpineNode, SnakeSpineNodeType as SnakeSpineNodeType};
 
-type SpawnSnakeSpineNode = fn() -> Entity;
-
-
 /// All creature visual movable parts will have this component to query their transformations.  
 #[derive(Component)]
 pub struct CreatureBodyVisualElement;

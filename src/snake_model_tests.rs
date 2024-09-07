@@ -4,7 +4,7 @@ use crate::snake_model::*;
 
 #[cfg(test)]
 mod tests {
-    use std::f32::consts::{self, PI};
+    use std::f32::consts::{PI};
 
     use super::*;
 
@@ -104,7 +104,7 @@ mod tests {
         });
         let traces_expected_vect: Vec<TraceItem> = traces_expected.clone().into_iter().collect();
         let trace_actual: Vec<TraceItem> = snake.trace.clone().into_iter().collect();
-        let mut trace_zip_iter = traces_expected_vect.iter().zip(trace_actual.iter());
+        let trace_zip_iter = traces_expected_vect.iter().zip(trace_actual.iter());
 
         for (expected, actual) in trace_zip_iter {
             assert_eq!(expected.index, actual.index);
@@ -131,7 +131,7 @@ mod tests {
         });
         let traces_expected_vect: Vec<TraceItem> = traces_expected.clone().into_iter().collect();
         let trace_actual: Vec<TraceItem> = snake.trace.clone().into_iter().collect();
-        let mut trace_zip_iter = traces_expected_vect.iter().zip(trace_actual.iter());
+        let trace_zip_iter = traces_expected_vect.iter().zip(trace_actual.iter());
 
         for (expected, actual) in trace_zip_iter {
             assert_eq!(expected.index, actual.index);

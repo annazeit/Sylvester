@@ -1,6 +1,5 @@
 use bevy::math::Vec2;
-use bevy::prelude::{Commands, Component, Entity, Res};
-use bevy::sprite::SpriteBundle;
+use bevy::prelude::{Component, Entity, Res};
 use std::collections::LinkedList;
 use std::f32::consts::PI;
 
