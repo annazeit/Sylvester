@@ -73,16 +73,11 @@ fn get_last_trace_index_before_clean(snake: &SnakeModel, gizmos: &mut Gizmos) ->
     let mut current_pos = snake.head_pos;
     let mut total_distance = 0.0;
 
-    let step = snake.tracing_step;
-    let mut color_change = 0;
     let mut last_trace_index_before_clean = 0;
     for i in snake.trace.iter() {
         total_distance += current_pos.distance(i.pos);
-        let color = Color::hsl(360.0 * color_change as f32 / step as f32, 0.95, 0.7);
-        color_change += 1;
-
-        gizmos.line_2d(current_pos, i.pos, color);
         current_pos = i.pos;
+        
         if total_distance > 20.0 + snake.size * snake.node_radius * 2.0 {
             last_trace_index_before_clean = i.index;
             break;
@@ -92,6 +87,9 @@ fn get_last_trace_index_before_clean(snake: &SnakeModel, gizmos: &mut Gizmos) ->
 }
 
 fn draw_nodes(snake: &mut SnakeModel, gizmos: &mut Gizmos, query_visual_element: &mut Query<&mut Transform, With<CreatureBodyVisualElement>>) {
+    let mut current_pos = snake.head_pos;
+    let step = snake.tracing_step;
+    let mut color_change = 0;
     for i in 0..=(snake.size) as i32 {
         let distance_from_head = i as f32 * (snake.tracing_step * 2.0);
         let trace_positions_iterator = snake.trace.iter().map(|p| p.pos);
@@ -101,8 +99,16 @@ fn draw_nodes(snake: &mut SnakeModel, gizmos: &mut Gizmos, query_visual_element:
             trace_positions_iterator, 
             distance_from_head
         );
+        
         //gizmos.circle_2d(node_pos, snake.node_radius, BLUE);
         
+        let color = Color::hsl(360.0 * color_change as f32 / step as f32, 0.95, 0.7);
+        color_change += 1; 
+
+        gizmos.line_2d(current_pos, node_calc_result.position, color);
+        if i != 0 {
+            current_pos = node_calc_result.position;
+        }
 
         let snake_node = {
             let mut node: Mut<Transform> = query_visual_element.get_mut(snake.body[i as usize].node_type).unwrap();
@@ -131,8 +137,10 @@ fn snake_update (
     for mut snake in &mut snake_query {
         snake.head_direction_angle += keyboard_rotation(&keyboard_input, &snake, &time) * (snake.movement_speed / 4.0);
 
-        let keyboard_up_down_input = keyboard_movement_up_down_impure(&keyboard_input);
+        let keyboard_up_down_input: SnakeMoveDirection = keyboard_movement_up_down_impure(&keyboard_input);
         head_move_pure(keyboard_up_down_input, time.delta_seconds(), &mut snake);
+
+        let node_pos = draw_nodes(&mut snake, &mut gizmos, &mut query_visual_element);
         
         let last_trace_index_before_clean = get_last_trace_index_before_clean(&snake, &mut gizmos);
         clear_extra_traces(&mut snake.trace, last_trace_index_before_clean);

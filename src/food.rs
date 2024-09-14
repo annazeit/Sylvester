@@ -4,6 +4,7 @@ use bevy::color::{Color, Srgba};
 use bevy::math::Vec2;
 use bevy::prelude::*;
 use rand::Rng;
+use std::f32::*;
 
 use crate::snake_model::SnakeModel;
 use crate::grid::*;
@@ -102,7 +103,7 @@ fn new_food_position() -> Vec2 {
     Vec2::new(x, y)
 }
 fn new_food_direction() -> f32 {
-    let num = rand::thread_rng().gen_range(-180..=180) as f32;
+    let num = rand::thread_rng().gen_range(0.0..= consts::PI * 2.0) as f32;
     num
 }
 fn new_food_color() -> Srgba {
