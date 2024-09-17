@@ -1,3 +1,4 @@
+mod start;
 mod grid;
 mod sprite;
 mod snake_extension;
@@ -16,15 +17,19 @@ use bevy::{
 fn main() {
     App::new()
         .add_plugins((DefaultPlugins, Wireframe2dPlugin))
+
         .add_plugins(crate::grid::VisualDiagnosticPlugin)
         .add_plugins(crate::snake_extension::SnakePlugin)
         .add_plugins(crate::food::FoodPlugin)
+        .add_plugins(crate::start::StartPlugin)
         //.add_plugins(crate::sprite::SpritePlugin)
+
         .add_systems(Startup, setup)
+        .add_systems(Update, start::button_system)
+
         .run();
 }
 
 fn setup(mut commands: Commands) {
     commands.spawn(Camera2dBundle::default());
-    
 }

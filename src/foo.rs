@@ -1,5 +1,4 @@
 
-use std::f32::consts::PI;
 use crate::trace_position_calculator::angle_average_calculator;
 
 const interpolate_direction_precitions: f32 = 0.05;
@@ -54,6 +53,8 @@ pub fn interpolate_direction(prev_angle: f32, curr_angle: f32, next_angle: f32, 
 
 #[cfg(test)]
 mod tests {
+    use std::f32::consts::PI;
+
     use super::*;
     
     fn assert_float_equal(a: f32, b: f32) -> bool{

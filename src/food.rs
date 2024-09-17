@@ -5,6 +5,7 @@ use bevy::math::Vec2;
 use bevy::prelude::*;
 use rand::Rng;
 use std::f32::*;
+use std::f64::consts::PI;
 
 use crate::snake_model::SnakeModel;
 use crate::grid::*;
@@ -77,7 +78,7 @@ fn food_start (mut commands: Commands, asset_server: Res<AssetServer>) {
             },
             Food {
                 pos: new_food_position(),
-                direction: new_food_direction(),
+                direction: new_food_direction(rand::thread_rng().gen_range(0.0..= consts::PI * 2.0) as f32),
                 radius,
                 color: new_food_color(),
             }
@@ -102,9 +103,10 @@ fn new_food_position() -> Vec2 {
     let y = rand::thread_rng().gen_range(-300..=300) as f32;
     Vec2::new(x, y)
 }
-fn new_food_direction() -> f32 {
-    let num = rand::thread_rng().gen_range(0.0..= consts::PI * 2.0) as f32;
-    num
+fn new_food_direction(last_direction: f32) -> f32 {
+    let num = rand::thread_rng().gen_range(-10.0..= 10.0) as f32;
+    let new_direction = last_direction - consts::PI + (num / 10.0);
+    new_direction
 }
 fn new_food_color() -> Srgba {
     let mut rnd = rand::thread_rng();
@@ -129,7 +131,7 @@ fn food_on_bound(food: &mut Food, bound_query: &Query<&mut Bound> ) {
             ((distance_vector.x * distance_vector.x) + (distance_vector.y * distance_vector.y)).sqrt()
         };
         if distance_from_origin_to_food > (bound.radius - (food.radius * 2.0 )) {
-            food.direction = new_food_direction()
+            food.direction = new_food_direction(food.direction)
         }
     }
 }
@@ -158,7 +160,7 @@ fn food_update(
     for (mut food, mut transform) in &mut food_query {
         for mut snake in &mut snake_query {
             if snake_eats_food(&snake, &food) {
-                food.direction = new_food_direction();
+                food.direction = new_food_direction(food.direction);
                 food.pos = new_food_position();
                 food.color = new_food_color();
 
@@ -176,6 +178,7 @@ fn food_update(
 
         food_on_bound(&mut food, &bound_query);
 
-        transform.translation = Vec3::new(food.pos.x, food.pos.y, 0.0);
+        transform.translation = Vec3::new(food.pos.x, food.pos.y, 0.0); 
+        transform.rotation = Quat::from_rotation_z(food.direction + consts::PI / 2.0 + consts::PI);
     }
 }

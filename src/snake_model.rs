@@ -1,5 +1,5 @@
 use bevy::math::Vec2;
-use bevy::prelude::{Component, Entity, Res};
+use bevy::prelude::{Component, Entity};
 use std::collections::LinkedList;
 use std::f32::consts::PI;
 
@@ -71,7 +71,7 @@ pub fn snake_model_new(i: i32) -> SnakeModel {
         trace_counter: 0,
         trace: LinkedList::from([trace_item]),
         tracing_step: 10.0,
-        size: 5.0,
+        size: 2.0,
         node_radius: 10.0,
         body: vec![],
     }
