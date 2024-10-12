@@ -1,6 +1,11 @@
-use bevy::{color::palettes::basic::*, prelude::*, winit::WinitSettings};
+use bevy::{color::palettes::basic::*, prelude::*};
 
 pub struct StartPlugin;
+
+#[derive(Component)]
+pub struct StartVisualDiagnostic {
+    enabled: bool,
+}
 
 impl Plugin for StartPlugin {
     fn build (&self, app: &mut App) {
@@ -14,6 +19,9 @@ const HOVERED_BUTTON: Color = Color::srgb(0.25, 0.25, 0.25);
 const PRESSED_BUTTON: Color = Color::srgb(0.35, 0.75, 0.35);
 
 fn button_start(mut commands: Commands, asset_server: Res<AssetServer>) {
+    commands.spawn(StartVisualDiagnostic{
+        enabled: false,
+    });
     commands
         .spawn(NodeBundle {
             style: Style {
@@ -56,6 +64,18 @@ fn button_start(mut commands: Commands, asset_server: Res<AssetServer>) {
         });
 }
 
+/// Visual diagnostics enabled when we need to draw extra entity shapes using gizmos to help to debug game.
+/// Without visual diagnostics gizmos will not be used and we will see only SpriteBundles.
+/// Drawing gizmos with SpriteBundles together helps to test the game.
+pub fn start_button_draw_visual_diagnostics_info(query: &Query<&StartVisualDiagnostic>) -> bool {
+    for item in query {
+        if item.enabled { 
+            return true;
+        }
+    }
+    return false;
+}
+
 pub fn button_system(
     mut interaction_query: Query<
         (
@@ -66,22 +86,25 @@ pub fn button_system(
         ),
         (Changed<Interaction>, With<Button>),
     >,
-    mut text_query: Query<&mut Text>,
+    mut start_button_query: Query<&mut StartVisualDiagnostic>,
 ) {
-    for (interaction, mut color, mut border_color, children) in &mut interaction_query {
-        let mut text = text_query.get_mut(children[0]).unwrap();
-        match *interaction {
-            Interaction::Pressed => {
-                *color = PRESSED_BUTTON.into();
-                border_color.0 = RED.into();
-            }
-            Interaction::Hovered => {
-                *color = HOVERED_BUTTON.into();
-                border_color.0 = Color::WHITE;
-            }
-            Interaction::None => {
-                *color = NORMAL_BUTTON.into();
-                border_color.0 = Color::BLACK;
+    for mut button in &mut start_button_query {
+        for (interaction, mut color, mut border_color, children) in &mut interaction_query {
+            println!("{}", button.enabled);
+            match *interaction {
+                Interaction::Pressed => {
+                    *color = PRESSED_BUTTON.into();
+                    border_color.0 = RED.into();
+                    button.enabled = !button.enabled;   
+                }
+                Interaction::Hovered => {
+                    *color = HOVERED_BUTTON.into();
+                    border_color.0 = Color::WHITE;
+                }
+                Interaction::None => {
+                    *color = NORMAL_BUTTON.into();
+                    border_color.0 = Color::BLACK;
+                }
             }
         }
     }

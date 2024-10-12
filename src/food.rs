@@ -89,10 +89,10 @@ fn food_start (mut commands: Commands, asset_server: Res<AssetServer>) {
 fn draw_bound(
     mut gizmos: Gizmos,
     bound_query: Query<&mut Bound>,
-    query: Query<&VisualDiagnostic>
+    query: Query<&GridVisualDiagnostic>
 ) {
     for bound in &bound_query{
-        if draw_visual_diagnostics_info(&query) {
+        if grid_draw_visual_diagnostics_info(&query) {
             gizmos.circle_2d(bound.pos, bound.radius, RED);
         }
     }
@@ -136,7 +136,7 @@ fn food_on_bound(food: &mut Food, bound_query: &Query<&mut Bound> ) {
     }
 }
 
-fn draw_food(food: &mut Food, gizmos: &mut Gizmos, query: &Query<&VisualDiagnostic>) {
+fn draw_food(food: &mut Food, gizmos: &mut Gizmos, query: &Query<&GridVisualDiagnostic>) {
     let food_move = {
         let x = f32::cos(food.direction);
         let y = f32::sin(food.direction);
@@ -144,7 +144,7 @@ fn draw_food(food: &mut Food, gizmos: &mut Gizmos, query: &Query<&VisualDiagnost
     };
     food.pos += food_move;
     
-    if draw_visual_diagnostics_info(&query) {
+    if grid_draw_visual_diagnostics_info(&query) {
         gizmos.circle_2d(food.pos, food.radius, food.color);
     }
 }
@@ -154,7 +154,7 @@ fn food_update(
     mut food_query: Query<(&mut Food, &mut Transform)>,
     mut snake_query: Query<&mut SnakeModel>,
     mut score_query: Query<(&mut Text, &mut Score)>,
-    query: Query<&VisualDiagnostic>
+    query: Query<&GridVisualDiagnostic>
 
 ) {
     for (mut food, mut transform) in &mut food_query {
