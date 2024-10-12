@@ -1,4 +1,4 @@
-use bevy::{color::palettes::basic::*, prelude::*};
+use bevy::{color::palettes::basic::*, gizmos, math::VectorSpace, prelude::*};
 
 pub struct StartPlugin;
 
@@ -68,8 +68,8 @@ fn button_start(mut commands: Commands, asset_server: Res<AssetServer>) {
 /// Without visual diagnostics gizmos will not be used and we will see only SpriteBundles.
 /// Drawing gizmos with SpriteBundles together helps to test the game.
 pub fn start_button_draw_visual_diagnostics_info(query: &Query<&StartVisualDiagnostic>) -> bool {
-    for item in query {
-        if item.enabled { 
+    for button in query {
+        if button.enabled == true { 
             return true;
         }
     }
@@ -87,15 +87,15 @@ pub fn button_system(
         (Changed<Interaction>, With<Button>),
     >,
     mut start_button_query: Query<&mut StartVisualDiagnostic>,
+    mut gizmos: Gizmos
 ) {
     for mut button in &mut start_button_query {
         for (interaction, mut color, mut border_color, children) in &mut interaction_query {
-            println!("{}", button.enabled);
             match *interaction {
                 Interaction::Pressed => {
                     *color = PRESSED_BUTTON.into();
                     border_color.0 = RED.into();
-                    button.enabled = !button.enabled;   
+                    button.enabled = true;   
                 }
                 Interaction::Hovered => {
                     *color = HOVERED_BUTTON.into();
