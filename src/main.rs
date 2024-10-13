@@ -25,7 +25,6 @@ fn main() {
         //.add_plugins(crate::sprite::SpritePlugin)
 
         .add_systems(Startup, setup)
-        .add_systems(Update, start::button_system)
 
         .run();
 }

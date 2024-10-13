@@ -9,6 +9,7 @@ use std::f64::consts::PI;
 
 use crate::snake_model::SnakeModel;
 use crate::grid::*;
+use crate::start::*;
 
 pub struct FoodPlugin;
 
@@ -154,31 +155,34 @@ fn food_update(
     mut food_query: Query<(&mut Food, &mut Transform)>,
     mut snake_query: Query<&mut SnakeModel>,
     mut score_query: Query<(&mut Text, &mut Score)>,
-    query: Query<&GridVisualDiagnostic>
+    query: Query<&GridVisualDiagnostic>,
+    start_button_query: Query<&StartVisualDiagnostic>,
 
 ) {
-    for (mut food, mut transform) in &mut food_query {
-        for mut snake in &mut snake_query {
-            if snake_eats_food(&snake, &food) {
-                food.direction = new_food_direction(food.direction);
-                food.pos = new_food_position();
-                food.color = new_food_color();
-
-                for (mut text, mut score) in &mut score_query {
-                    score.score_num += 1;
-                    let score_string = score.score_num.to_string();
-                    text.sections[0].value = format!("Score: {score_string}");
+    if start_button_draw_visual_diagnostics_info(&start_button_query) {
+        for (mut food, mut transform) in &mut food_query {
+            for mut snake in &mut snake_query {
+                if snake_eats_food(&snake, &food) {
+                    food.direction = new_food_direction(food.direction);
+                    food.pos = new_food_position();
+                    food.color = new_food_color();
+    
+                    for (mut text, mut score) in &mut score_query {
+                        score.score_num += 1;
+                        let score_string = score.score_num.to_string();
+                        text.sections[0].value = format!("Score: {score_string}");
+                    }
+                    snake.size += 1.0;
+                    break;
                 }
-                snake.size += 1.0;
-                break;
             }
+    
+            draw_food(&mut food, &mut gizmos, &query);
+    
+            food_on_bound(&mut food, &bound_query);
+    
+            transform.translation = Vec3::new(food.pos.x, food.pos.y, 0.0); 
+            transform.rotation = Quat::from_rotation_z(food.direction + consts::PI / 2.0 + consts::PI);
         }
-
-        draw_food(&mut food, &mut gizmos, &query);
-
-        food_on_bound(&mut food, &bound_query);
-
-        transform.translation = Vec3::new(food.pos.x, food.pos.y, 0.0); 
-        transform.rotation = Quat::from_rotation_z(food.direction + consts::PI / 2.0 + consts::PI);
     }
 }
