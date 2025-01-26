@@ -13,10 +13,6 @@ pub struct TheGame {
     pub start_button_entity: Option<Entity>,
 }
 
-#[derive(Component)]
-pub struct StartVisualDiagnostic {
-    enabled: bool,
-}
 
 impl Plugin for StartPlugin {
     fn build (&self, app: &mut App) {
@@ -30,9 +26,6 @@ const HOVERED_BUTTON: Color = Color::srgb(0.25, 0.25, 0.25);
 const PRESSED_BUTTON: Color = Color::srgb(0.35, 0.75, 0.35);
 
 fn create_game(mut commands: Commands, asset_server: Res<AssetServer>) {
-    commands.spawn(StartVisualDiagnostic{
-        enabled: false,
-    });
 
     // All UI must be under this root node component.
     let mut node_bundle_entity_commands: EntityCommands<'_> = commands.spawn(NodeBundle {

@@ -87,7 +87,7 @@ fn get_last_trace_index_before_clean(snake: &SnakeModel, gizmos: &mut Gizmos) ->
     return last_trace_index_before_clean;
 }
 
-fn draw_nodes(snake: &mut SnakeModel, gizmos: &mut Gizmos, query_visual_element: &mut Query<&mut Transform, With<CreatureBodyVisualElement>>, start_button_query: &Query<&StartVisualDiagnostic>) {
+fn draw_nodes(snake: &mut SnakeModel, gizmos: &mut Gizmos, query_visual_element: &mut Query<&mut Transform, With<CreatureBodyVisualElement>>) {
     let mut current_pos = snake.head_pos;
     let step = snake.tracing_step;
     let mut color_change = 0;
@@ -134,7 +134,6 @@ fn snake_update (
     keyboard_input: Res<ButtonInput<KeyCode>>,
     time: Res<Time>,
     grid_query: Query<&GridVisualDiagnostic>,
-    start_button_query: Query<&StartVisualDiagnostic>,
     mut query_visual_element: Query<&mut Transform, With<CreatureBodyVisualElement>>,
 ) {
     for mut snake in &mut snake_query {
@@ -143,7 +142,7 @@ fn snake_update (
         let keyboard_up_down_input: SnakeMoveDirection = keyboard_movement_up_down_impure(&keyboard_input);
         head_move_pure(keyboard_up_down_input, time.delta_seconds(), &mut snake);
 
-        let node_pos = draw_nodes(&mut snake, &mut gizmos, &mut query_visual_element, &start_button_query);
+        let node_pos = draw_nodes(&mut snake, &mut gizmos, &mut query_visual_element);
         
         let last_trace_index_before_clean = get_last_trace_index_before_clean(&snake, &mut gizmos);
         clear_extra_traces(&mut snake.trace, last_trace_index_before_clean);
@@ -152,7 +151,7 @@ fn snake_update (
 
         draw_tail(&mut gizmos, snake.head_radius, &snake, &grid_query);
 
-        draw_nodes(&mut snake, &mut gizmos, &mut query_visual_element, &start_button_query);
+        draw_nodes(&mut snake, &mut gizmos, &mut query_visual_element);
 
         let snake_head = {
             let mut head: Mut<Transform> = query_visual_element.get_mut(snake.body[0].node_type).unwrap();

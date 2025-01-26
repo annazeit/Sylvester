@@ -156,7 +156,6 @@ fn food_update(
     mut snake_query: Query<&mut SnakeModel>,
     mut score_query: Query<(&mut Text, &mut Score)>,
     query: Query<&GridVisualDiagnostic>,
-    start_button_query: Query<&StartVisualDiagnostic>,
 
 ) {
     for (mut food, mut transform) in &mut food_query {
