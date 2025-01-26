@@ -10,7 +10,7 @@ pub struct TheGame {
 
     /// If Some then point to Start button entity id. 
     /// If None then geme is running.
-    pub waitning_for_start: Option<Entity>,
+    pub start_button_entity: Option<Entity>,
 }
 
 #[derive(Component)]
@@ -35,7 +35,7 @@ fn create_game(mut commands: Commands, asset_server: Res<AssetServer>) {
     });
 
     // All UI must be under this root node component.
-    let mut root_ui_entity_commands: EntityCommands<'_> = commands.spawn(NodeBundle {
+    let mut node_bundle_entity_commands: EntityCommands<'_> = commands.spawn(NodeBundle {
         style: Style {
             width: Val::Percent(100.0),
             height: Val::Percent(100.0),
@@ -45,18 +45,17 @@ fn create_game(mut commands: Commands, asset_server: Res<AssetServer>) {
         },
         ..default()
     });
-    println!("node_bundle_entity: {}", root_ui_entity_commands.id().index().to_string());
 
     let mut the_game = TheGame { 
-        root_ui_node: root_ui_entity_commands.id(),
-        waitning_for_start: None 
+        root_ui_node: node_bundle_entity_commands.id(),
+        start_button_entity: None 
     };
-    create_start_button(&mut the_game, &mut root_ui_entity_commands, &asset_server);
+    create_start_button(&mut the_game, &mut node_bundle_entity_commands, &asset_server);
     commands.spawn(the_game);
 }
 
-fn create_start_button(the_game: &mut TheGame, root_ui_entity_commands: &mut EntityCommands<'_>, asset_server: &Res<AssetServer>) {
-    root_ui_entity_commands.with_children(|parent| {
+fn create_start_button(the_game: &mut TheGame, node_bundle_entity_command: &mut EntityCommands<'_>, asset_server: &Res<AssetServer>) {
+    node_bundle_entity_command.with_children(|parent| {
         let mut start_button_bundle_entity = parent.spawn(ButtonBundle {
             style: Style {
                 width: Val::Px(150.0),
@@ -74,8 +73,7 @@ fn create_start_button(the_game: &mut TheGame, root_ui_entity_commands: &mut Ent
             ..default()
         });
         let start_button_bundle_entity_id = start_button_bundle_entity.id();
-        println!("button_bundle_entity: {}", start_button_bundle_entity_id.index().to_string());
-        the_game.waitning_for_start = Some(start_button_bundle_entity_id);
+        the_game.start_button_entity = Some(start_button_bundle_entity_id);
         
         start_button_bundle_entity.with_children(|parent| {
             let start_text_bundle_entity = parent.spawn(TextBundle::from_section(
@@ -91,35 +89,22 @@ fn create_start_button(the_game: &mut TheGame, root_ui_entity_commands: &mut Ent
     });
 }
 
-
-/// Visual diagnostics enabled when we need to draw extra entity shapes using gizmos to help to debug game.
-/// Without visual diagnostics gizmos will not be used and we will see only SpriteBundles.
-/// Drawing gizmos with SpriteBundles together helps to test the game.
-pub fn start_button_draw_visual_diagnostics_info(query: &Query<&StartVisualDiagnostic>) -> bool {
-    for button in query {
-        if button.enabled == true { 
-            return true;
-        }
-    }
-    return false;
-}
-
 fn despawn_start_button(
     the_game_query: &mut Query<&mut TheGame>,
     commands: &mut Commands,
 ){
     let mut the_game = the_game_query.single_mut();
-    match the_game.waitning_for_start {
+    match the_game.start_button_entity {
         None => { 
             println!("No Start Game Button") 
         }
-        Some (waiting_for_start) => {
+        Some (start_button_entity_value) => {
             // Remove first from parent and then remove button hierarchically
             // according to documentation https://bevy-cheatbook.github.io/fundamentals/hierarchy.html
-            commands.entity(the_game.root_ui_node).remove_children(&[ waiting_for_start ]);
+            commands.entity(the_game.root_ui_node).remove_children(&[ start_button_entity_value ]);
             // start button has childer elements and must be despowned recursively.
-            commands.entity(waiting_for_start).despawn_recursive();
-            the_game.waitning_for_start = None;
+            commands.entity(start_button_entity_value).despawn_recursive();
+            the_game.start_button_entity = None;
         }
     }
 }

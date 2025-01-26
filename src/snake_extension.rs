@@ -137,30 +137,27 @@ fn snake_update (
     start_button_query: Query<&StartVisualDiagnostic>,
     mut query_visual_element: Query<&mut Transform, With<CreatureBodyVisualElement>>,
 ) {
-    if start_button_draw_visual_diagnostics_info(&start_button_query) {
-        //println!("AAAAAAAAAAAAA");
-        for mut snake in &mut snake_query {
-            snake.head_direction_angle += keyboard_rotation(&keyboard_input, &snake, &time) * (snake.movement_speed / 4.0);
-    
-            let keyboard_up_down_input: SnakeMoveDirection = keyboard_movement_up_down_impure(&keyboard_input);
-            head_move_pure(keyboard_up_down_input, time.delta_seconds(), &mut snake);
-    
-            let node_pos = draw_nodes(&mut snake, &mut gizmos, &mut query_visual_element, &start_button_query);
-            
-            let last_trace_index_before_clean = get_last_trace_index_before_clean(&snake, &mut gizmos);
-            clear_extra_traces(&mut snake.trace, last_trace_index_before_clean);
-    
-            draw_circle(&mut gizmos, snake.head_pos, snake.head_radius, &grid_query); // draws hidden snake head in gizmos
-    
-            draw_tail(&mut gizmos, snake.head_radius, &snake, &grid_query);
-    
-            draw_nodes(&mut snake, &mut gizmos, &mut query_visual_element, &start_button_query);
-    
-            let snake_head = {
-                let mut head: Mut<Transform> = query_visual_element.get_mut(snake.body[0].node_type).unwrap();
-                head.translation = Vec3::new(snake.head_pos.x, snake.head_pos.y, 0.0); 
-                head.rotation = Quat::from_rotation_z(snake.head_direction_angle + PI / 2.0 + PI);
-            };  
-        }
+    for mut snake in &mut snake_query {
+        snake.head_direction_angle += keyboard_rotation(&keyboard_input, &snake, &time) * (snake.movement_speed / 4.0);
+
+        let keyboard_up_down_input: SnakeMoveDirection = keyboard_movement_up_down_impure(&keyboard_input);
+        head_move_pure(keyboard_up_down_input, time.delta_seconds(), &mut snake);
+
+        let node_pos = draw_nodes(&mut snake, &mut gizmos, &mut query_visual_element, &start_button_query);
+        
+        let last_trace_index_before_clean = get_last_trace_index_before_clean(&snake, &mut gizmos);
+        clear_extra_traces(&mut snake.trace, last_trace_index_before_clean);
+
+        draw_circle(&mut gizmos, snake.head_pos, snake.head_radius, &grid_query); // draws hidden snake head in gizmos
+
+        draw_tail(&mut gizmos, snake.head_radius, &snake, &grid_query);
+
+        draw_nodes(&mut snake, &mut gizmos, &mut query_visual_element, &start_button_query);
+
+        let snake_head = {
+            let mut head: Mut<Transform> = query_visual_element.get_mut(snake.body[0].node_type).unwrap();
+            head.translation = Vec3::new(snake.head_pos.x, snake.head_pos.y, 0.0); 
+            head.rotation = Quat::from_rotation_z(snake.head_direction_angle + PI / 2.0 + PI);
+        };  
     }
 } 
