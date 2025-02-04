@@ -1,3 +1,5 @@
+mod model;
+
 mod start;
 mod grid;
 mod sprite;

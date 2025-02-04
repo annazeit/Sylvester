@@ -1,18 +1,9 @@
-use bevy::{color::palettes::basic::*, ecs::system::EntityCommands, gizmos, math::VectorSpace, prelude::*};
+use bevy::{ecs::system::EntityCommands, gizmos, math::VectorSpace, prelude::*};
+use crate::model::game_model::*; 
+use crate::model::game_test::*;
 
-pub struct StartPlugin;
 
-/// Global game component.
-#[derive(Component)]
-pub struct TheGame {
-    // NodeBundle is permanent UI root component.
-    pub root_ui_node: Entity,
-
-    /// If Some then point to Start button entity id. 
-    /// If None then geme is running.
-    pub start_button_entity: Option<Entity>,
-}
-
+pub struct StartPlugin; 
 
 impl Plugin for StartPlugin {
     fn build (&self, app: &mut App) {
@@ -23,7 +14,7 @@ impl Plugin for StartPlugin {
 
 const NORMAL_BUTTON: Color = Color::srgb(0.15, 0.15, 0.15);
 const HOVERED_BUTTON: Color = Color::srgb(0.25, 0.25, 0.25);
-const PRESSED_BUTTON: Color = Color::srgb(0.35, 0.75, 0.35);
+//const PRESSED_BUTTON: Color = Color::srgb(0.35, 0.75, 0.35);
 
 fn create_game(mut commands: Commands, asset_server: Res<AssetServer>) {
 
