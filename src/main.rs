@@ -10,7 +10,6 @@ mod foo;
 mod snake_model_tests;
 mod creature_body_evolution;
 mod trace_position_calculator;
-
 use bevy::{
     prelude::*,
     sprite::Wireframe2dPlugin,
