@@ -18,6 +18,7 @@ use bevy::{
 fn main() {
     App::new()
         .add_plugins((DefaultPlugins, Wireframe2dPlugin))
+        .init_state::<crate::model::game_model::AppState>()
 
         .add_plugins(crate::start::StartPlugin)
         .add_plugins(crate::grid::VisualDiagnosticPlugin)

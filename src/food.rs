@@ -10,6 +10,7 @@ use std::f64::consts::PI;
 use crate::snake_model::SnakeModel;
 use crate::grid::*;
 use crate::start::*;
+use crate::model::game_model::AppState;
 
 pub struct FoodPlugin;
 
@@ -33,10 +34,10 @@ struct Score {
 
 impl Plugin for FoodPlugin {
     fn build (&self, app: &mut App) {
-        app.add_systems(Startup, food_start);
+        app.add_systems(OnEnter(AppState::Playing), food_start);
         app.add_systems(Startup, score_start);
         app.add_systems(Startup, bound_start);
-        app.add_systems(Update, food_update);
+        app.add_systems(Update, food_update.run_if(in_state(AppState::Playing)));
         app.add_systems(Update, draw_bound);
     }
 }
@@ -71,14 +72,15 @@ fn food_start (mut commands: Commands, asset_server: Res<AssetServer>) {
     let radius = 10.0;
     let scale = (radius * 2.0) / food_image_size;
     for _ in 0..5 {
+        let pos = new_food_position();
         commands.spawn((
             SpriteBundle {
                 texture: asset_server.load("Food.png"),
-                transform: Transform::from_xyz(120.0, 0.0, 0.0).with_scale(Vec3::new(scale, scale, scale)),
+                transform: Transform::from_xyz(pos.x, pos.y, 0.0).with_scale(Vec3::new(scale, scale, scale)),
                 ..default()
             },
             Food {
-                pos: new_food_position(),
+                pos,
                 direction: new_food_direction(rand::thread_rng().gen_range(0.0..= consts::PI * 2.0) as f32),
                 radius,
                 color: new_food_color(),

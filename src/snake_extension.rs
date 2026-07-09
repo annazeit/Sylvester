@@ -14,13 +14,14 @@ use crate::grid::*;
 use crate::snake_model::*;
 use crate::trace_position_calculator::*;
 use crate::start::*;
+use crate::model::game_model::AppState;
 
 pub struct SnakePlugin;
 
 impl Plugin for SnakePlugin {
     fn build (&self, app: &mut App) {
-        app.add_systems(Startup, snake_start);
-        app.add_systems(Update, snake_update);
+        app.add_systems(OnEnter(AppState::Playing), snake_start);
+        app.add_systems(Update, snake_update.run_if(in_state(AppState::Playing)));
     }
 }
 

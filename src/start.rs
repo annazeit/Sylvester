@@ -96,9 +96,9 @@ fn despawn_start_button(
 }
 
 // Handles hover/click styling for any Button, and despawns the Start button
-// (via despawn_start_button) when it's pressed. Gameplay systems (snake/food)
-// run regardless of whether the button exists, so pressing Start currently
-// just clears the button UI rather than gating the game logic itself.
+// (via despawn_start_button) when it's pressed. Pressing Start also moves
+// AppState to Playing, which is what actually unblocks the snake/food
+// gameplay systems (they're registered with .run_if(in_state(AppState::Playing))).
 pub fn button_system(
     mut the_game_query: Query<&mut TheGame>,
     mut start_geme_button_query: Query<
@@ -110,11 +110,13 @@ pub fn button_system(
         (Changed<Interaction>, With<Button>),
     >,
     mut commands: Commands,
+    mut next_app_state: ResMut<NextState<AppState>>,
 ) {
     for (interaction, mut color, mut border_color) in &mut start_geme_button_query {
         match *interaction {
             Interaction::Pressed => {
                 despawn_start_button(&mut the_game_query, &mut commands);
+                next_app_state.set(AppState::Playing);
             }
             Interaction::Hovered => {
                 *color = HOVERED_BUTTON.into();
