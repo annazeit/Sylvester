@@ -104,6 +104,8 @@ fn new_food_position() -> Vec2 {
     let y = rand::thread_rng().gen_range(-300..=300) as f32;
     Vec2::new(x, y)
 }
+// Picks a new wander direction roughly opposite the last one (+/- a small random
+// wobble), used both when food is eaten/respawned and when it bounces off the bound.
 fn new_food_direction(last_direction: f32) -> f32 {
     let num = rand::thread_rng().gen_range(-10.0..= 10.0) as f32;
     let new_direction = last_direction - consts::PI + (num / 10.0);
@@ -116,6 +118,7 @@ fn new_food_color() -> Srgba {
     color
 }
 
+// True when the snake's head circle overlaps the food's circle.
 fn snake_eats_food(
     snake: &SnakeModel,
     food: &Food
@@ -124,6 +127,7 @@ fn snake_eats_food(
     let distance_between = ((distance_vector.x * distance_vector.x) + (distance_vector.y * distance_vector.y)).sqrt();
     distance_between < food.radius + snake.head_radius
 }
+// Redirects food that has wandered too close to the boundary edge, keeping it inside the play area.
 fn food_on_bound(food: &mut Food, bound_query: &Query<&mut Bound> ) {
     for bound in bound_query {
         let origin = Vec2::new(0.0, 0.0);
@@ -160,6 +164,7 @@ fn food_update(
 ) {
     for (mut food, mut transform) in &mut food_query {
         for mut snake in &mut snake_query {
+            // eating: respawn this food elsewhere, bump score, grow the snake by one segment
             if snake_eats_food(&snake, &food) {
                 food.direction = new_food_direction(food.direction);
                 food.pos = new_food_position();

@@ -3,11 +3,15 @@ use bevy::prelude::{Component, Entity};
 use std::collections::LinkedList;
 use std::f32::consts::PI;
 
+// A single recorded point along the path the snake's head has travelled.
+// The body segments don't move independently - their positions are derived
+// by walking backwards along this trail (see trace_position_calculator.rs).
 #[derive(PartialEq)]
 #[derive(Debug)]
 #[derive(Clone, Copy)]
 pub struct TraceItem {
     pub pos: Vec2,
+    // increasing counter used to identify/prune old trace items (see clear_extra_traces)
     pub index: i64,
 }
 
@@ -17,6 +21,8 @@ pub enum SnakeSpineNodeType {
     Small,
 }
 
+// One visual body segment: how far along the trace it sits, and the entity
+// (sprite) whose Transform gets updated to that position every frame.
 pub struct SnakeSpineNode{
     pub distance_from_head: f32,
     pub node_type: Entity
@@ -41,12 +47,15 @@ pub struct SnakeModel {
     pub rotation_speed_in_degrees: f32,
     // increases every time that a new TraceItem is added to the LinkedList, it is used as the index of the last segment
     pub trace_counter: i64,
+    // history of head positions, newest first (front), used to place body segments
     pub trace: LinkedList<TraceItem>,
+    // minimum distance the head must travel before a new trace point is recorded
     pub tracing_step: f32,
     // NOT number of foods eaten by snake // number of nodes drawn
-    pub size: f32, 
+    pub size: f32,
     pub node_radius: f32,
 
+    // visual body segments (sprites), spawned once up front and repositioned each frame
     pub body: Vec<SnakeSpineNode>,
 }
 
@@ -86,6 +95,8 @@ pub fn snake_head_new_list() -> Vec<SnakeModel> {
     result
 }
 
+// Drops trace items from the back (oldest) of the list whose index is below
+// max_index, since the snake's body no longer reaches that far back.
 pub fn clear_extra_traces(list: &mut LinkedList<TraceItem>, max_index: i64) {
     loop {
         match list.back() {
@@ -100,6 +111,9 @@ pub fn clear_extra_traces(list: &mut LinkedList<TraceItem>, max_index: i64) {
     }
 }
 
+// Moves the head one frame's worth of distance in its current facing direction,
+// and records a new trace point once the head has moved at least `tracing_step`
+// away from the last recorded point (so the trace isn't updated every frame).
 pub fn head_move_pure(keyboard_up_down_input: SnakeMoveDirection, time_delta_seconds: f32, snake: &mut SnakeModel) {
     let keyboard_up_down_input_ratio: f32 = match keyboard_up_down_input {
         SnakeMoveDirection::Forward => { 1.0 }

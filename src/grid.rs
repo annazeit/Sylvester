@@ -9,6 +9,8 @@ use bevy::color::palettes::css::GREY;
 
 pub struct VisualDiagnosticPlugin;
 
+// Toggled by pressing "1" (see draw_grid below). When enabled, draws a debug grid
+// and switches on gizmo drawing for hitboxes/paths in other systems (snake, food, bound).
 #[derive(Component)]
 pub struct GridVisualDiagnostic {
     enabled: bool,

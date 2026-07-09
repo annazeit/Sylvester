@@ -16,6 +16,8 @@ const NORMAL_BUTTON: Color = Color::srgb(0.15, 0.15, 0.15);
 const HOVERED_BUTTON: Color = Color::srgb(0.25, 0.25, 0.25);
 //const PRESSED_BUTTON: Color = Color::srgb(0.35, 0.75, 0.35);
 
+// Spawns the root UI node and the single TheGame entity that tracks it,
+// then adds the Start button as its child.
 fn create_game(mut commands: Commands, asset_server: Res<AssetServer>) {
 
     // All UI must be under this root node component.
@@ -93,6 +95,10 @@ fn despawn_start_button(
     }
 }
 
+// Handles hover/click styling for any Button, and despawns the Start button
+// (via despawn_start_button) when it's pressed. Gameplay systems (snake/food)
+// run regardless of whether the button exists, so pressing Start currently
+// just clears the button UI rather than gating the game logic itself.
 pub fn button_system(
     mut the_game_query: Query<&mut TheGame>,
     mut start_geme_button_query: Query<

@@ -25,6 +25,7 @@ impl Plugin for SnakePlugin {
 }
 
 
+// Spawns the initial snake(s) and their body sprites (see creature_body_evolution.rs).
 fn snake_start (mut commands: Commands,  asset_server: Res<AssetServer>) {
     for mut snake in snake_head_new_list() {
         let list = spine_from_size(&mut commands, &asset_server, &mut snake);
@@ -54,6 +55,8 @@ fn draw_circle(gizmos: &mut Gizmos, position: Vec2, radius: f32, grid_query: &Qu
     }
 }
 
+// Debug-only: draws two shrinking circles behind the head (gizmos), roughly
+// sketching where the first couple of body segments should be, for tuning.
 fn draw_tail(gizmos: &mut Gizmos, radius: f32, snake: &SnakeModel, grid_query: &Query<&GridVisualDiagnostic>){
     let mut distance = radius * 2.0;
     for i in 1..=2 {
@@ -70,6 +73,9 @@ fn draw_tail(gizmos: &mut Gizmos, radius: f32, snake: &SnakeModel, grid_query: &
     }
 }
 
+// Walks the trace from the head backwards, accumulating distance, until it
+// passes the distance the whole body currently needs to span. Everything
+// older (further back) than that point is no longer needed and can be pruned.
 fn get_last_trace_index_before_clean(snake: &SnakeModel, gizmos: &mut Gizmos) -> i64 {
     let mut current_pos = snake.head_pos;
     let mut total_distance = 0.0;
@@ -78,7 +84,7 @@ fn get_last_trace_index_before_clean(snake: &SnakeModel, gizmos: &mut Gizmos) ->
     for i in snake.trace.iter() {
         total_distance += current_pos.distance(i.pos);
         current_pos = i.pos;
-        
+
         if total_distance > 20.0 + snake.size * snake.node_radius * 2.0 {
             last_trace_index_before_clean = i.index;
             break;
@@ -87,11 +93,15 @@ fn get_last_trace_index_before_clean(snake: &SnakeModel, gizmos: &mut Gizmos) ->
     return last_trace_index_before_clean;
 }
 
+// For each body segment (0 = head, up to snake.size), computes its position/rotation
+// by looking up that far back along the head's trace (calculate_node_pos_traced_on_distance_from_head),
+// then moves the corresponding pre-spawned sprite (snake.body[i]) there. Called twice
+// per frame in snake_update: once to get positions for pruning, once to actually draw.
 fn draw_nodes(snake: &mut SnakeModel, gizmos: &mut Gizmos, query_visual_element: &mut Query<&mut Transform, With<CreatureBodyVisualElement>>) {
     let mut current_pos = snake.head_pos;
     let step = snake.tracing_step;
     let mut color_change = 0;
-    
+
     for i in 0..=(snake.size) as i32 {
         let distance_from_head = i as f32 * (snake.tracing_step * 2.0);
         let trace_positions_iterator = snake.trace.iter().map(|p| p.pos);
@@ -128,8 +138,11 @@ fn draw_nodes(snake: &mut SnakeModel, gizmos: &mut Gizmos, query_visual_element:
     }
 }
 
+// Main per-frame snake system: applies keyboard input to rotate/move the head,
+// recomputes and draws body segment positions, then prunes trace history that's
+// no longer needed (see get_last_trace_index_before_clean).
 fn snake_update (
-    mut gizmos: Gizmos, 
+    mut gizmos: Gizmos,
     mut snake_query: Query<&mut SnakeModel>,
     keyboard_input: Res<ButtonInput<KeyCode>>,
     time: Res<Time>,

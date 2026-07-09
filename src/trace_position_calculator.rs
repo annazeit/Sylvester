@@ -68,7 +68,12 @@ pub fn angle_average_calculator(items: &Vec<f32>) -> f32 {
     return f32::atan2(sum_sin, sum_cos)
 }
 
-//calculates node_pos so it can be drawn in the trace
+// Finds where a body segment should sit, `distance_from_head` back along the
+// head's recorded path (trace), by walking checkpoint-to-checkpoint and
+// subtracting each segment's length until the remaining distance fits within
+// the current segment - like measuring a fixed length of rope laid over the path.
+// Also reports the facing angle at that point (and neighboring segment angles,
+// for smoothing via interpolate_direction) plus how far along that segment it landed.
 pub fn calculate_node_pos_traced_on_distance_from_head (
     head_pos: Vec2, 
     head_direction: f32,

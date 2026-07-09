@@ -3,6 +3,12 @@ use crate::trace_position_calculator::angle_average_calculator;
 
 const interpolate_direction_precitions: f32 = 0.05;
 
+// Smooths a body segment's rotation across a trace segment so it doesn't snap
+// at segment boundaries. `target` is 0..1 (0 = start of segment, 1 = end).
+// Below 0.5 the result is interpolated between the (prev+curr) average angle and
+// curr_angle; above 0.5 between curr_angle and the (curr+next) average angle.
+// Uses a binary-search-like loop (instead of a closed-form lerp) because
+// averaging angles isn't linear - see angle_average_calculator.
 pub fn interpolate_direction(prev_angle: f32, curr_angle: f32, next_angle: f32, target: f32) -> f32 { // returns target angle
     let mut a: f32;
     let mut b: f32;

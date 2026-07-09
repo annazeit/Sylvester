@@ -6,8 +6,11 @@ use crate::snake_model::{SnakeModel, SnakeSpineNode, SnakeSpineNodeType as Snake
 #[derive(Component)]
 pub struct CreatureBodyVisualElement;
 
+// Pre-spawns one head sprite plus 100 body-segment sprites up front (rather than
+// spawning/despawning as the snake grows), returning them as SnakeSpineNodes.
+// snake_extension.rs repositions these each frame based on snake.size and the trace.
 pub fn spine_from_size(commands: &mut Commands,  asset_server: &Res<AssetServer>, snake: &mut SnakeModel) -> Vec<SnakeSpineNode> {
-    // if size > 20 { 
+    // if size > 20 {
     //     let big_entity = spawn();
     //     return vec! [ 
     //         SnakeSpineNode {
