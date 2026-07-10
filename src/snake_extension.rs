@@ -103,8 +103,10 @@ fn draw_nodes(snake: &mut SnakeModel, gizmos: &mut Gizmos, query_visual_element:
     let step = snake.tracing_step;
     let mut color_change = 0;
 
+    let body_sprite_scale = BASE_BODY_SPRITE_SCALE * (snake.node_radius / BASE_NODE_RADIUS);
+
     for i in 0..=(snake.size) as i32 {
-        let distance_from_head = i as f32 * (snake.tracing_step * 2.0);
+        let distance_from_head = i as f32 * (snake.node_radius * 2.0);
         let trace_positions_iterator = snake.trace.iter().map(|p| p.pos);
         let node_calc_result = calculate_node_pos_traced_on_distance_from_head(
             snake.head_pos, 
@@ -125,7 +127,8 @@ fn draw_nodes(snake: &mut SnakeModel, gizmos: &mut Gizmos, query_visual_element:
 
         let snake_node = {
             let mut node: Mut<Transform> = query_visual_element.get_mut(snake.body[i as usize].node_type).unwrap();
-            node.translation = Vec3::new(node_calc_result.position.x, node_calc_result.position.y, 0.0); 
+            node.translation = Vec3::new(node_calc_result.position.x, node_calc_result.position.y, 0.0);
+            node.scale = Vec3::new(body_sprite_scale, body_sprite_scale, node.scale.z);
 
             //println!("{:?}", node_calc_result.directions.segment_distance_fraction.to_string());
             let a = interpolate_direction(
@@ -151,6 +154,8 @@ fn snake_update (
     mut query_visual_element: Query<&mut Transform, With<CreatureBodyVisualElement>>,
 ) {
     for mut snake in &mut snake_query {
+        snake.node_radius = node_radius(tier_for_size(snake.size));
+
         snake.head_direction_angle += keyboard_rotation(&keyboard_input, &snake, &time) * (snake.movement_speed / 4.0);
 
         let keyboard_up_down_input: SnakeMoveDirection = keyboard_movement_up_down_impure(&keyboard_input);
@@ -169,8 +174,10 @@ fn snake_update (
 
         let snake_head = {
             let mut head: Mut<Transform> = query_visual_element.get_mut(snake.body[0].node_type).unwrap();
-            head.translation = Vec3::new(snake.head_pos.x, snake.head_pos.y, 0.0); 
+            head.translation = Vec3::new(snake.head_pos.x, snake.head_pos.y, 0.0);
             head.rotation = Quat::from_rotation_z(snake.head_direction_angle + PI / 2.0 + PI);
-        };  
+            let head_sprite_scale = BASE_HEAD_SPRITE_SCALE * (snake.node_radius / BASE_NODE_RADIUS);
+            head.scale = Vec3::splat(head_sprite_scale);
+        };
     }
 } 

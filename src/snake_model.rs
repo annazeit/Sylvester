@@ -15,6 +15,7 @@ pub struct TraceItem {
     pub index: i64,
 }
 
+#[derive(PartialEq, Debug, Clone, Copy)]
 pub enum SnakeSpineNodeType {
     Big,
     Medium,
