@@ -154,7 +154,20 @@ fn snake_update (
     mut query_visual_element: Query<&mut Transform, With<CreatureBodyVisualElement>>,
 ) {
     for mut snake in &mut snake_query {
-        snake.node_radius = node_radius(tier_for_size(snake.size));
+        let target_tier = tier_for_size(snake.size);
+        if target_tier != snake.evolution_tier {
+            snake.evolution_transition_start_radius = snake.node_radius;
+            snake.evolution_tier = target_tier;
+            snake.evolution_transition_elapsed = 0.0;
+        }
+        let target_radius = node_radius(snake.evolution_tier);
+        if snake.evolution_transition_elapsed < SCALE_TRANSITION_DURATION {
+            let t = ease_smoothstep(snake.evolution_transition_elapsed / SCALE_TRANSITION_DURATION);
+            snake.node_radius = snake.evolution_transition_start_radius + (target_radius - snake.evolution_transition_start_radius) * t;
+            snake.evolution_transition_elapsed += time.delta_seconds();
+        } else {
+            snake.node_radius = target_radius;
+        }
 
         snake.head_direction_angle += keyboard_rotation(&keyboard_input, &snake, &time) * (snake.movement_speed / 4.0);
 

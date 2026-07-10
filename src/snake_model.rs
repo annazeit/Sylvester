@@ -58,6 +58,14 @@ pub struct SnakeModel {
 
     // visual body segments (sprites), spawned once up front and repositioned each frame
     pub body: Vec<SnakeSpineNode>,
+
+    // last evolution tier committed to; compared each frame against the size-derived
+    // tier to detect a change and kick off a new node_radius transition
+    pub evolution_tier: SnakeSpineNodeType,
+    // node_radius value the current transition is animating away from
+    pub evolution_transition_start_radius: f32,
+    // seconds since the current transition began; >= SCALE_TRANSITION_DURATION means settled
+    pub evolution_transition_elapsed: f32,
 }
 
 pub enum  SnakeMoveDirection {
@@ -84,8 +92,11 @@ pub fn snake_model_new(i: i32) -> SnakeModel {
         size: 5.0,
         node_radius: 10.0,
         body: vec![],
+        evolution_tier: SnakeSpineNodeType::Small,
+        evolution_transition_start_radius: 10.0,
+        evolution_transition_elapsed: 1.0, // starts settled (>= SCALE_TRANSITION_DURATION)
     }
-    
+
 }
 
 pub fn snake_head_new_list() -> Vec<SnakeModel> {

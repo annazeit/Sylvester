@@ -23,6 +23,15 @@ pub fn tier_for_size(size: f32) -> SnakeSpineNodeType {
     else { SnakeSpineNodeType::Small }
 }
 
+// Seconds it takes node_radius to animate into a newly reached tier (see snake_extension.rs snake_update).
+pub const SCALE_TRANSITION_DURATION: f32 = 0.4;
+
+// Eases 0..1 progress so growth accelerates then decelerates instead of moving at a constant rate.
+pub fn ease_smoothstep(t: f32) -> f32 {
+    let t = t.clamp(0.0, 1.0);
+    t * t * (3.0 - 2.0 * t)
+}
+
 // Pre-spawns one head sprite plus 100 body-segment sprites up front (rather than
 // spawning/despawning as the snake grows), returning them as SnakeSpineNodes.
 // snake_extension.rs repositions these each frame based on snake.size and the trace.
@@ -116,5 +125,18 @@ mod tests {
     fn big_tier_at_and_above_threshold() {
         assert_eq!(tier_for_size(25.0), SnakeSpineNodeType::Big);
         assert_eq!(tier_for_size(100.0), SnakeSpineNodeType::Big);
+    }
+
+    #[test]
+    fn ease_smoothstep_endpoints_and_midpoint() {
+        assert_eq!(ease_smoothstep(0.0), 0.0);
+        assert_eq!(ease_smoothstep(1.0), 1.0);
+        assert_eq!(ease_smoothstep(0.5), 0.5);
+    }
+
+    #[test]
+    fn ease_smoothstep_clamps_out_of_range_input() {
+        assert_eq!(ease_smoothstep(-1.0), 0.0);
+        assert_eq!(ease_smoothstep(2.0), 1.0);
     }
 }
