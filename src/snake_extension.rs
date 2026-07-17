@@ -98,18 +98,28 @@ fn get_last_trace_index_before_clean(snake: &SnakeModel, gizmos: &mut Gizmos) ->
 // by looking up that far back along the head's trace (calculate_node_pos_traced_on_distance_from_head),
 // then moves the corresponding pre-spawned sprite (snake.body[i]) there. Called twice
 // per frame in snake_update: once to get positions for pruning, once to actually draw.
-fn draw_nodes(snake: &mut SnakeModel, gizmos: &mut Gizmos, query_visual_element: &mut Query<&mut Transform, With<CreatureBodyVisualElement>>) {
+// The last body segment (the tail) always gets the SpineEnd sprite so the small dot
+// on it points outwards, away from the rest of the body; every other segment gets SpinePart.
+fn draw_nodes(
+    snake: &mut SnakeModel,
+    gizmos: &mut Gizmos,
+    asset_server: &Res<AssetServer>,
+    query_visual_element: &mut Query<(&mut Transform, &mut Handle<Image>), With<CreatureBodyVisualElement>>,
+) {
     let mut current_pos = snake.head_pos;
     let step = snake.tracing_step;
     let mut color_change = 0;
 
     let body_sprite_scale = BASE_BODY_SPRITE_SCALE * (snake.node_radius / BASE_NODE_RADIUS);
+    let end_sprite_scale = BASE_END_SPRITE_SCALE * (snake.node_radius / BASE_NODE_RADIUS);
     let visible_segment_count = snake.size as i32;
+    let part_texture: Handle<Image> = asset_server.load("SpinePart.png");
+    let end_texture: Handle<Image> = asset_server.load("SpineEnd.png");
 
     for i in 0..snake.body.len() as i32 {
         if i > visible_segment_count {
             // out of range because the creature shrank (e.g. poison food) - park until back in range
-            let mut node: Mut<Transform> = query_visual_element.get_mut(snake.body[i as usize].node_type).unwrap();
+            let (mut node, _texture) = query_visual_element.get_mut(snake.body[i as usize].node_type).unwrap();
             node.translation = PARKED_SEGMENT_POSITION;
             continue;
         }
@@ -134,18 +144,24 @@ fn draw_nodes(snake: &mut SnakeModel, gizmos: &mut Gizmos, query_visual_element:
         }
 
         let snake_node = {
-            let mut node: Mut<Transform> = query_visual_element.get_mut(snake.body[i as usize].node_type).unwrap();
+            let is_tail = i != 0 && i == visible_segment_count;
+            let (mut node, mut texture) = query_visual_element.get_mut(snake.body[i as usize].node_type).unwrap();
             node.translation = Vec3::new(node_calc_result.position.x, node_calc_result.position.y, 0.0);
-            node.scale = Vec3::new(body_sprite_scale, body_sprite_scale, node.scale.z);
+            let scale = if is_tail { end_sprite_scale } else { body_sprite_scale };
+            node.scale = Vec3::new(scale, scale, node.scale.z);
 
             //println!("{:?}", node_calc_result.directions.segment_distance_fraction.to_string());
             let a = interpolate_direction(
-                node_calc_result.directions.direction_previous, 
+                node_calc_result.directions.direction_previous,
                 node_calc_result.directions.direction_current,
                 node_calc_result.directions.direction_next,
                 node_calc_result.directions.segment_distance_fraction,
             );
             node.rotation = Quat::from_rotation_z(a + PI / 2.0 + PI);
+
+            if i != 0 {
+                *texture = if is_tail { end_texture.clone() } else { part_texture.clone() };
+            }
         };
     }
 }
@@ -161,7 +177,7 @@ fn snake_update (
     keyboard_input: Res<ButtonInput<KeyCode>>,
     time: Res<Time>,
     grid_query: Query<&GridVisualDiagnostic>,
-    mut query_visual_element: Query<&mut Transform, With<CreatureBodyVisualElement>>,
+    mut query_visual_element: Query<(&mut Transform, &mut Handle<Image>), With<CreatureBodyVisualElement>>,
 ) {
     for mut snake in &mut snake_query {
         ensure_body_capacity(&mut commands, &asset_server, &mut snake);
@@ -186,8 +202,8 @@ fn snake_update (
         let keyboard_up_down_input: SnakeMoveDirection = keyboard_movement_up_down_impure(&keyboard_input);
         head_move_pure(keyboard_up_down_input, time.delta_seconds(), &mut snake);
 
-        let node_pos = draw_nodes(&mut snake, &mut gizmos, &mut query_visual_element);
-        
+        let node_pos = draw_nodes(&mut snake, &mut gizmos, &asset_server, &mut query_visual_element);
+
         let last_trace_index_before_clean = get_last_trace_index_before_clean(&snake, &mut gizmos);
         clear_extra_traces(&mut snake.trace, last_trace_index_before_clean);
 
@@ -195,10 +211,10 @@ fn snake_update (
 
         draw_tail(&mut gizmos, snake.head_radius, &snake, &grid_query);
 
-        draw_nodes(&mut snake, &mut gizmos, &mut query_visual_element);
+        draw_nodes(&mut snake, &mut gizmos, &asset_server, &mut query_visual_element);
 
         let snake_head = {
-            let mut head: Mut<Transform> = query_visual_element.get_mut(snake.body[0].node_type).unwrap();
+            let (mut head, _texture) = query_visual_element.get_mut(snake.body[0].node_type).unwrap();
             head.translation = Vec3::new(snake.head_pos.x, snake.head_pos.y, 0.0);
             head.rotation = Quat::from_rotation_z(snake.head_direction_angle + PI / 2.0 + PI);
             let head_sprite_scale = BASE_HEAD_SPRITE_SCALE * (snake.node_radius / BASE_NODE_RADIUS);

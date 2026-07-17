@@ -15,6 +15,9 @@ const BIG_TIER_MIN_SIZE: f32 = 25.0;
 pub const BASE_NODE_RADIUS: f32 = 10.0;
 pub const BASE_BODY_SPRITE_SCALE: f32 = 0.2;
 pub const BASE_HEAD_SPRITE_SCALE: f32 = 0.1;
+// SpineEnd.png's ring renders larger than SpinePart.png's at the same scale, so it
+// gets its own smaller value here - tune by eye against SpinePart's ring size.
+pub const BASE_END_SPRITE_SCALE: f32 = 0.12;
 
 // Off-screen holding spot for body segments not currently part of the visible
 // creature - used at spawn time here, and in snake_extension.rs draw_nodes to
