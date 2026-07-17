@@ -1,6 +1,7 @@
 mod model;
 
 mod start;
+mod environment;
 mod grid;
 mod sprite;
 mod snake_extension;
@@ -21,6 +22,7 @@ fn main() {
         .init_state::<crate::model::game_model::AppState>()
 
         .add_plugins(crate::start::StartPlugin)
+        .add_plugins(crate::environment::EnvironmentPlugin)
         .add_plugins(crate::grid::VisualDiagnosticPlugin)
         .add_plugins(crate::snake_extension::SnakePlugin)
         .add_plugins(crate::food::FoodPlugin)

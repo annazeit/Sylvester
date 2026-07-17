@@ -104,8 +104,16 @@ fn draw_nodes(snake: &mut SnakeModel, gizmos: &mut Gizmos, query_visual_element:
     let mut color_change = 0;
 
     let body_sprite_scale = BASE_BODY_SPRITE_SCALE * (snake.node_radius / BASE_NODE_RADIUS);
+    let visible_segment_count = snake.size as i32;
 
-    for i in 0..=(snake.size) as i32 {
+    for i in 0..snake.body.len() as i32 {
+        if i > visible_segment_count {
+            // out of range because the creature shrank (e.g. poison food) - park until back in range
+            let mut node: Mut<Transform> = query_visual_element.get_mut(snake.body[i as usize].node_type).unwrap();
+            node.translation = PARKED_SEGMENT_POSITION;
+            continue;
+        }
+
         let distance_from_head = i as f32 * (snake.node_radius * 2.0);
         let trace_positions_iterator = snake.trace.iter().map(|p| p.pos);
         let node_calc_result = calculate_node_pos_traced_on_distance_from_head(
@@ -146,6 +154,8 @@ fn draw_nodes(snake: &mut SnakeModel, gizmos: &mut Gizmos, query_visual_element:
 // recomputes and draws body segment positions, then prunes trace history that's
 // no longer needed (see get_last_trace_index_before_clean).
 fn snake_update (
+    mut commands: Commands,
+    asset_server: Res<AssetServer>,
     mut gizmos: Gizmos,
     mut snake_query: Query<&mut SnakeModel>,
     keyboard_input: Res<ButtonInput<KeyCode>>,
@@ -154,6 +164,8 @@ fn snake_update (
     mut query_visual_element: Query<&mut Transform, With<CreatureBodyVisualElement>>,
 ) {
     for mut snake in &mut snake_query {
+        ensure_body_capacity(&mut commands, &asset_server, &mut snake);
+
         let target_tier = tier_for_size(snake.size);
         if target_tier != snake.evolution_tier {
             snake.evolution_transition_start_radius = snake.node_radius;

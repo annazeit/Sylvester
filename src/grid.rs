@@ -43,29 +43,33 @@ pub fn grid_draw_visual_diagnostics_info(query: &Query<&GridVisualDiagnostic>) -
     return false;
 }
 
+// Half-width/height the grid lines span - how far out the debug grid reaches.
+const GRID_EXTENT: f32 = 5000.0;
+
 fn draw_grid(
     mut gizmos: Gizmos,
     mut grid_query: Query<&mut GridVisualDiagnostic>,
     keyboard_input: Res<ButtonInput<KeyCode>>
 ){
     for mut grid in &mut grid_query {
-        if keyboard_input.just_pressed(KeyCode::Digit1) { 
-            grid.enabled = !grid.enabled;    
+        if keyboard_input.just_pressed(KeyCode::Digit1) {
+            grid.enabled = !grid.enabled;
         }
 
         if grid.enabled {
-            for i in 1..50 {
-                let start_pos: Vec2 = Vec2::new(-1000.0, -1000.0 + (i as f32 * grid.cell_size));
-                let end_pos: Vec2 = Vec2::new(1000.0, -1000.0 + (i as f32 * grid.cell_size));
+            let line_count = (2.0 * GRID_EXTENT / grid.cell_size) as i32;
+            for i in 1..line_count {
+                let start_pos: Vec2 = Vec2::new(-GRID_EXTENT, -GRID_EXTENT + (i as f32 * grid.cell_size));
+                let end_pos: Vec2 = Vec2::new(GRID_EXTENT, -GRID_EXTENT + (i as f32 * grid.cell_size));
                 gizmos.line_2d(start_pos, end_pos, GREY);
             }
-            for i in 1..50 {
-                let start_pos: Vec2 = Vec2::new(-1000.0 + (i as f32 * grid.cell_size), -1000.0);
-                let end_pos: Vec2 = Vec2::new(-1000.0 + (i as f32 * grid.cell_size), 1000.0);
+            for i in 1..line_count {
+                let start_pos: Vec2 = Vec2::new(-GRID_EXTENT + (i as f32 * grid.cell_size), -GRID_EXTENT);
+                let end_pos: Vec2 = Vec2::new(-GRID_EXTENT + (i as f32 * grid.cell_size), GRID_EXTENT);
                 gizmos.line_2d(start_pos, end_pos, GREY);
             }
             gizmos.line_2d(Vec2::new(-5.0, -5.0), Vec2::new(5.0, 5.0), RED);
             gizmos.line_2d(Vec2::new(5.0, -5.0), Vec2::new(-5.0, 5.0), RED);
-        }   
+        }
     }
 }

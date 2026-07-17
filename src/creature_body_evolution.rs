@@ -16,6 +16,11 @@ pub const BASE_NODE_RADIUS: f32 = 10.0;
 pub const BASE_BODY_SPRITE_SCALE: f32 = 0.2;
 pub const BASE_HEAD_SPRITE_SCALE: f32 = 0.1;
 
+// Off-screen holding spot for body segments not currently part of the visible
+// creature - used at spawn time here, and in snake_extension.rs draw_nodes to
+// park segments that fall out of range when the creature shrinks (e.g. poison food).
+pub const PARKED_SEGMENT_POSITION: Vec3 = Vec3::new(1000.0, 0.0, 0.0);
+
 // Maps the snake's current size to its evolution tier.
 pub fn tier_for_size(size: f32) -> SnakeSpineNodeType {
     if size >= BIG_TIER_MIN_SIZE { SnakeSpineNodeType::Big }
@@ -66,7 +71,7 @@ pub fn spine_from_size(commands: &mut Commands,  asset_server: &Res<AssetServer>
     let head_entity = commands.spawn((
         SpriteBundle {
             texture: asset_server.load("SpineHead.png"),
-            transform: Transform::from_xyz(1000.0, 0.0, 0.0).with_scale(Vec3::splat(BASE_HEAD_SPRITE_SCALE)),
+            transform: Transform::from_translation(PARKED_SEGMENT_POSITION).with_scale(Vec3::splat(BASE_HEAD_SPRITE_SCALE)),
             ..default()
         },
         CreatureBodyVisualElement
@@ -79,22 +84,36 @@ pub fn spine_from_size(commands: &mut Commands,  asset_server: &Res<AssetServer>
     });
 
     for _ in 0..100 {
+        list.push(spawn_body_node(commands, asset_server));
+    }
+
+    return list;
+}
+
+fn spawn_body_node(commands: &mut Commands, asset_server: &Res<AssetServer>) -> SnakeSpineNode {
     let node_entity = commands.spawn((
         SpriteBundle {
             texture: asset_server.load("SpinePart.png"),
-            transform: Transform::from_xyz(1000.0, 0.0, 0.0).with_scale(Vec3::new(BASE_BODY_SPRITE_SCALE, BASE_BODY_SPRITE_SCALE, 0.0)),
+            transform: Transform::from_translation(PARKED_SEGMENT_POSITION).with_scale(Vec3::new(BASE_BODY_SPRITE_SCALE, BASE_BODY_SPRITE_SCALE, 0.0)),
             ..default()
         },
         CreatureBodyVisualElement
     )).id();
 
-    list.push(SnakeSpineNode {
+    SnakeSpineNode {
         distance_from_head: 50.0,
         node_type: node_entity,
-    });
     }
-    
-    return list;
+}
+
+// draw_nodes (snake_extension.rs) indexes snake.body[0..=snake.size], but the pool is
+// only pre-spawned up to 100 segments. Tops it up on demand so eating enough food to
+// exceed that no longer panics with an out-of-bounds index.
+pub fn ensure_body_capacity(commands: &mut Commands, asset_server: &Res<AssetServer>, snake: &mut SnakeModel) {
+    let needed = snake.size as usize + 1; // +1 for the head at index 0
+    while snake.body.len() < needed {
+        snake.body.push(spawn_body_node(commands, asset_server));
+    }
 }
 
 pub fn node_radius(node: SnakeSpineNodeType) -> f32 {
