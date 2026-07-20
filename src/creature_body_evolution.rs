@@ -1,6 +1,8 @@
 use bevy::prelude::*;
 use bevy::{sprite::SpriteBundle};
 use crate::snake_model::{SnakeModel, SnakeSpineNode, SnakeSpineNodeType as SnakeSpineNodeType};
+#[cfg(test)]
+use crate::snake_model::snake_model_new;
 
 /// All creature visual movable parts will have this component to query their transformations.
 #[derive(Component)]
@@ -31,13 +33,33 @@ pub fn tier_for_size(size: f32) -> SnakeSpineNodeType {
     else { SnakeSpineNodeType::Small }
 }
 
-// Seconds it takes node_radius to animate into a newly reached tier (see snake_extension.rs snake_update).
+// Seconds it takes node_radius to animate into a newly reached tier.
 pub const SCALE_TRANSITION_DURATION: f32 = 0.4;
 
 // Eases 0..1 progress so growth accelerates then decelerates instead of moving at a constant rate.
 pub fn ease_smoothstep(t: f32) -> f32 {
     let t = t.clamp(0.0, 1.0);
     t * t * (3.0 - 2.0 * t)
+}
+
+// Advances the creature's size-tier evolution once per frame: detects a tier change
+// (kicking off a fresh transition from the current radius) and eases node_radius
+// toward the current tier's target radius over SCALE_TRANSITION_DURATION.
+pub fn update_evolution_transition(snake: &mut SnakeModel, delta_seconds: f32) {
+    let target_tier = tier_for_size(snake.size);
+    if target_tier != snake.evolution_tier {
+        snake.evolution_transition_start_radius = snake.node_radius;
+        snake.evolution_tier = target_tier;
+        snake.evolution_transition_elapsed = 0.0;
+    }
+    let target_radius = node_radius(snake.evolution_tier);
+    if snake.evolution_transition_elapsed < SCALE_TRANSITION_DURATION {
+        let t = ease_smoothstep(snake.evolution_transition_elapsed / SCALE_TRANSITION_DURATION);
+        snake.node_radius = snake.evolution_transition_start_radius + (target_radius - snake.evolution_transition_start_radius) * t;
+        snake.evolution_transition_elapsed += delta_seconds;
+    } else {
+        snake.node_radius = target_radius;
+    }
 }
 
 // Pre-spawns one head sprite plus 100 body-segment sprites up front (rather than
@@ -160,5 +182,32 @@ mod tests {
     fn ease_smoothstep_clamps_out_of_range_input() {
         assert_eq!(ease_smoothstep(-1.0), 0.0);
         assert_eq!(ease_smoothstep(2.0), 1.0);
+    }
+
+    #[test]
+    fn no_tier_change_settles_immediately_at_current_target() {
+        let mut snake = snake_model_new(0); // starts at size 5.0, Small tier, already settled
+        update_evolution_transition(&mut snake, 0.1);
+        assert_eq!(snake.node_radius, BASE_NODE_RADIUS);
+    }
+
+    #[test]
+    fn tier_change_eases_toward_target_instead_of_jumping() {
+        let mut snake = snake_model_new(0);
+        snake.size = MEDIUM_TIER_MIN_SIZE; // crosses into Medium tier
+        update_evolution_transition(&mut snake, 0.1); // starts the transition (t=0 this frame)
+        update_evolution_transition(&mut snake, 0.1); // elapsed has now advanced, t>0
+        assert_eq!(snake.evolution_tier, SnakeSpineNodeType::Medium);
+        assert!(snake.node_radius > BASE_NODE_RADIUS);
+        assert!(snake.node_radius < node_radius(SnakeSpineNodeType::Medium));
+    }
+
+    #[test]
+    fn transition_settles_at_target_once_duration_elapses() {
+        let mut snake = snake_model_new(0);
+        snake.size = MEDIUM_TIER_MIN_SIZE;
+        update_evolution_transition(&mut snake, SCALE_TRANSITION_DURATION); // starts the transition; elapsed reaches the duration
+        update_evolution_transition(&mut snake, 0.0); // elapsed is no longer < duration -> snaps to target
+        assert_eq!(snake.node_radius, node_radius(SnakeSpineNodeType::Medium));
     }
 }

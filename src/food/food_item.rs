@@ -1,5 +1,3 @@
-use bevy::app::{App, Plugin, Startup, Update};
-use bevy::color::palettes::basic::RED;
 use bevy::color::Color;
 use bevy::math::Vec2;
 use bevy::prelude::*;
@@ -9,13 +7,12 @@ use std::f64::consts::PI;
 
 use crate::snake_model::SnakeModel;
 use crate::grid::*;
-use crate::start::*;
-use crate::model::game_model::AppState;
-
-pub struct FoodPlugin;
+use super::STARTING_SNAKE_SIZE;
+use super::bound::{Bound, BASE_BOUND_RADIUS};
+use super::score::{Score, add_point};
 
 #[derive(Component)]
-pub struct Food {
+pub(super) struct Food {
     pos: Vec2,
     direction: f32,
     radius: f32,
@@ -32,74 +29,18 @@ const MIN_SNAKE_SIZE: f32 = 1.0;
 // Bright and saturated (not dark) so it reads clearly against the dark background instead of blending in.
 const POISON_SPRITE_COLOR: Color = Color::srgb(0.2, 1.0, 0.3);
 
-// Growth is measured from the snake's starting size (snake_model_new), so nothing
-// changes until the creature actually grows beyond it.
-const STARTING_SNAKE_SIZE: f32 = 5.0;
-const BASE_BOUND_RADIUS: f32 = 500.0; // today's fixed value
-const BOUND_RADIUS_GROWTH_PER_SIZE: f32 = 15.0;
 const BASE_FOOD_COUNT: usize = 5; // today's fixed count
 const SIZE_PER_EXTRA_FOOD: f32 = 5.0;
 const MAX_FOOD_COUNT: usize = 20; // cap so entity count doesn't grow unbounded over a long session
 // Fraction of the boundary radius food spawns within, keeping it off the very edge.
 const FOOD_SPAWN_MARGIN_FACTOR: f32 = 0.6;
 
-pub fn target_bound_radius(snake_size: f32) -> f32 {
-    BASE_BOUND_RADIUS + (snake_size - STARTING_SNAKE_SIZE).max(0.0) * BOUND_RADIUS_GROWTH_PER_SIZE
-}
-
-pub fn target_food_count(snake_size: f32) -> usize {
+pub(super) fn target_food_count(snake_size: f32) -> usize {
     let extra = ((snake_size - STARTING_SNAKE_SIZE).max(0.0) / SIZE_PER_EXTRA_FOOD) as usize;
     (BASE_FOOD_COUNT + extra).min(MAX_FOOD_COUNT)
 }
-#[derive(Component)]
-pub struct Bound {
-    pos: Vec2,
-    radius: f32,
-}
 
-#[derive(Component)]
-struct Score {
-    score_num: i32
-}
-
-impl Plugin for FoodPlugin {
-    fn build (&self, app: &mut App) {
-        app.add_systems(OnEnter(AppState::Playing), food_start);
-        app.add_systems(Startup, score_start);
-        app.add_systems(Startup, bound_start);
-        app.add_systems(Update, food_update.run_if(in_state(AppState::Playing)));
-        app.add_systems(Update, bound_update.run_if(in_state(AppState::Playing)));
-        app.add_systems(Update, ensure_food_capacity.run_if(in_state(AppState::Playing)));
-        app.add_systems(Update, draw_bound);
-    }
-}
-
-fn bound_start(mut commands: Commands) {
-    commands.spawn(Bound{
-        pos: Vec2::new(0.0, 0.0),
-        radius: 500.0,
-    });
-}
-fn score_start(mut commands: Commands, asset_server: Res<AssetServer>) {
-    let font = asset_server.load("MovistarTextRegular.ttf");
-    let text_style = TextStyle {
-        font: font.clone(),
-        font_size: 50.0,
-        ..default()
-    };
-    let text_justification = JustifyText::Center;
-
-    commands.spawn((
-        Text2dBundle {
-            text: Text::from_section("no score", text_style.clone())
-                .with_justify(text_justification),
-            transform: Transform::from_xyz(0.0, 200.0, 0.0),
-            ..default()
-        },
-        Score { score_num: 0 }
-    ));
-}
-fn food_start (mut commands: Commands, asset_server: Res<AssetServer>) {
+pub(super) fn food_start(mut commands: Commands, asset_server: Res<AssetServer>) {
     for _ in 0..BASE_FOOD_COUNT {
         spawn_food(&mut commands, &asset_server, BASE_BOUND_RADIUS);
     }
@@ -127,19 +68,9 @@ fn spawn_food(commands: &mut Commands, asset_server: &Res<AssetServer>, bound_ra
     ));
 }
 
-// Grows Bound.radius with the snake's size - no easing needed, since size already
-// increases in small, gradual steps (+1 per food, -3 per poison).
-fn bound_update(snake_query: Query<&SnakeModel>, mut bound_query: Query<&mut Bound>) {
-    let Some(snake) = snake_query.iter().next() else { return; };
-    let target = target_bound_radius(snake.size);
-    for mut bound in &mut bound_query {
-        bound.radius = target;
-    }
-}
-
 // Tops up the food pool toward target_food_count as the snake grows, mirroring
 // ensure_body_capacity's pattern in creature_body_evolution.rs.
-fn ensure_food_capacity(
+pub(super) fn ensure_food_capacity(
     mut commands: Commands,
     asset_server: Res<AssetServer>,
     snake_query: Query<&SnakeModel>,
@@ -153,18 +84,6 @@ fn ensure_food_capacity(
         let bound_radius = bound_query.iter().next().map(|b| b.radius).unwrap_or(BASE_BOUND_RADIUS);
         for _ in current..target {
             spawn_food(&mut commands, &asset_server, bound_radius);
-        }
-    }
-}
-
-fn draw_bound(
-    mut gizmos: Gizmos,
-    bound_query: Query<&mut Bound>,
-    query: Query<&GridVisualDiagnostic>
-) {
-    for bound in &bound_query{
-        if grid_draw_visual_diagnostics_info(&query) {
-            gizmos.circle_2d(bound.pos, bound.radius, RED);
         }
     }
 }
@@ -201,7 +120,7 @@ fn snake_eats_food(
     distance_between < food.radius + snake.head_radius
 }
 // Redirects food that has wandered too close to the boundary edge, keeping it inside the play area.
-fn food_on_bound(food: &mut Food, bound_query: &Query<&mut Bound> ) {
+fn food_on_bound(food: &mut Food, bound_query: &Query<&mut Bound>) {
     for bound in bound_query {
         let origin = Vec2::new(0.0, 0.0);
         let distance_from_origin_to_food: f32 = {
@@ -226,7 +145,8 @@ fn draw_food(food: &mut Food, gizmos: &mut Gizmos, query: &Query<&GridVisualDiag
         gizmos.circle_2d(food.pos, food.radius, food_sprite_color(food.is_poisonous));
     }
 }
-fn food_update(
+
+pub(super) fn food_update(
     mut gizmos: Gizmos,
     bound_query: Query<&mut Bound>,
     mut food_query: Query<(&mut Food, &mut Transform, &mut Sprite)>,
@@ -246,11 +166,7 @@ fn food_update(
                     snake.size = (snake.size - POISON_SIZE_PENALTY).max(MIN_SNAKE_SIZE);
                 } else {
                     snake.size += 1.0;
-                    for (mut text, mut score) in &mut score_query {
-                        score.score_num += 1;
-                        let score_string = score.score_num.to_string();
-                        text.sections[0].value = format!("Score: {score_string}");
-                    }
+                    add_point(&mut score_query);
                 }
 
                 food.direction = new_food_direction(food.direction);
@@ -282,17 +198,6 @@ mod tests {
     #[test]
     fn normal_food_gets_untouched_white_tint() {
         assert_eq!(food_sprite_color(false), Color::WHITE);
-    }
-
-    #[test]
-    fn bound_radius_matches_today_at_and_below_starting_size() {
-        assert_eq!(target_bound_radius(STARTING_SNAKE_SIZE), BASE_BOUND_RADIUS);
-        assert_eq!(target_bound_radius(0.0), BASE_BOUND_RADIUS);
-    }
-
-    #[test]
-    fn bound_radius_grows_beyond_starting_size() {
-        assert_eq!(target_bound_radius(STARTING_SNAKE_SIZE + 10.0), BASE_BOUND_RADIUS + 10.0 * BOUND_RADIUS_GROWTH_PER_SIZE);
     }
 
     #[test]
